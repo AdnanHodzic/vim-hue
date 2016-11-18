@@ -22,6 +22,31 @@ then
 fi
 }
 
+# make sure vim is installed
+#
+# if 74 vs 8 different location completely
+#
+# make config backups
+
+# ubuntu/debian 74
+# /usr/share/vim/vim74/colors
+#
+# config:
+# /etc/vim/vimrc.local
+#
+#
+# centos/redhat 74
+# /usr/share/vim/vim74/colors
+#
+# config:
+# /etc/vimrc
+#
+# mac
+# /usr/share/vim/vim72/colors
+#
+# config:
+# /usr/share/vim/vimrc
+
 # hue install:
 #
 # redhat family color install
@@ -35,3 +60,4 @@ fi
 # for all users
 
 root_check
+# exclude on mac?
