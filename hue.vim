@@ -38,7 +38,8 @@ let colors_name = "hue"
 :hi Operator guifg=Red ctermfg=Red
 :hi Define guifg=gold gui=bold ctermfg=yellow
 :hi Type guifg=CornflowerBlue ctermfg=2
-:hi Function guifg=navajowhite ctermfg=brown
+:hi Function guifg=navajowhite ctermfg=lightblue
+:hi MatchParen cterm=none ctermbg=red ctermfg=black
 :hi Structure guifg=green ctermfg=green
 :hi LineNr guifg=grey50 ctermfg=3
 :hi Ignore guifg=grey40 cterm=bold ctermfg=7
