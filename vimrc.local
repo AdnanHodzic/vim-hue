@@ -1,24 +1,28 @@
-colo hue			" set hue color scheme
-set encoding=utf-8	" utf-8 character encoding
-set ts=4			" tab 4 spaces
-set showmatch		" show matching bracets
-set hlsearch		" highlight searches
-set t_Co=256		" use 256 colors
-syntax on			" enable syntax highlighting
-set nu				" show line numbers
-set autoindent		" indent when moving to the next line while writing code
-"set expandtab		" expand tabs into spaces
-"let python_highlight_all = 1	"enable all Python syntax highlighting features
-set shiftwidth=4	" when using the >> or << commands, shift lines by 4 space
-set cursorline		" show a visual line under the cursor's current line
-:hi CursorLine   cterm=bold ctermbg=black guibg=darkred
-:nnoremap <Leader>c :set cursorline!<CR>
-set showmatch		" show the matching part of the pair for [] {} and ()
-set list			" display whitespace
+colo hue						" set hue color scheme
+set t_Co=256					" use 256 colors
+set encoding=utf-8				" utf-8 character encoding
+set tabstop=4					" tab 4 spaces
+set softtabstop=4				" tab inserts a combination of spaces to simulate tab stops at this width.
+set expandtab					" expand tabs into spaces
+set shiftwidth=4				" when using the >> or << commands, shift lines by 4 space
+set autoindent					" indent when moving to the next line while writing code
+set fileformat=unix				" convert file to unix file convention
+set textwidth=80				" text wrapping after 80 characters
+set showmatch					" show matching bracets
+set hlsearch					" highlight searches
+syntax on						" enable syntax coloring/highlighting 
+filetype indent plugin on		" automatic indentation for Python code
+let python_highlight_all = 1	"enable all Python syntax highlighting features
+set nu							" show line numbers
+set showmatch					" show the matching part of the pair for [] {} and ()
+set list						" display whitespace
+set clipboard=unnamedplus		" all yanking goes to clipboard (install vim-gtk)
+set paste						" Paste from a windows or from vim (shift + p preserve indent)
+set ignorecase					" case insensitive search
+set cursorline					" show a visual line under the cursor's current line
+:hi CursorLine   cterm=bold ctermbg=black guibg=darkred		" set cursor line bold with black background
+"match ErrorMsg '\%>80v.\+'		" highlight in red anything > 80 chars
 set lcs=tab:│┈,trail:·,extends:>,precedes:<,nbsp:&	" display tabs spaces
-set clipboard=unnamedplus	" all yanking goes to clipboard (install vim-gtk)
-match ErrorMsg '\%>80v.\+'	" highlight in red anything > 80 chars
-set ignorecase		" case insensitive search
-set laststatus=2	" enable status bar
-set statusline=\ %f%m%r%h%w\ %=%({%{&ff}\|%{(&fenc==\"\"?&enc:&fenc).((exists(\"+bomb\")\ &&\ &bomb)?\",B\":\"\")}%k\|%Y}%)\ %([%l,%v][%p%%]\ %):&	" extend status bar
-hi StatusLine ctermbg=black ctermfg=cyan "	colorize status bar
+set laststatus=2				" enable status bar
+set statusline=\ %f%m%r%h%w\ %=%({%{&ff}\|%{(&fenc==\"\"?&enc:&fenc).((exists(\"+bomb\")\ &&\ &bomb)?\",B\":\"\")}%k\|%Y}%)\ %([%l,%v][%p%%]\ %):&		" extend status bar
+hi StatusLine ctermbg=black ctermfg=cyan	" colorize status bar
