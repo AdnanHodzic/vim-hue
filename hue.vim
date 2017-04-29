@@ -20,7 +20,7 @@ let colors_name = "hue"
 :hi MoreMsg guifg=SeaGreen ctermfg=darkgreen
 :hi NonText guifg=RoyalBlue guibg=grey15 cterm=bold ctermfg=blue
 :hi Question guifg=springgreen ctermfg=green
-:hi Search guibg=peru guifg=black
+:hi Search ctermfg=red ctermbg=yellow guifg=black
 :hi SpecialKey guifg=yellowgreen ctermfg=darkgreen
 :hi StatusLine guibg=#c2bfa5 guifg=black gui=none cterm=bold,reverse
 :hi StatusLineNC guibg=#c2bfa5 guifg=grey40 gui=none cterm=reverse
