@@ -30,8 +30,8 @@ let colors_name = "hue"
 :hi WarningMsg guifg=salmon ctermfg=1
 :hi String guifg=LightBlue ctermfg=blue
 :hi Comment term=bold ctermfg=10 guifg=grey50
-:hi Constant guifg=#ffa0a0 ctermfg=brown
-:hi Special guifg=darkkhaki ctermfg=brown
+:hi Constant guifg=#ffa0a0 ctermfg=yellow
+:hi Special guifg=darkkhaki ctermfg=blue
 :hi Identifier guifg=salmon ctermfg=red
 :hi Include guifg=red ctermfg=red
 :hi PreProc guifg=red guibg=white ctermfg=red
@@ -41,7 +41,7 @@ let colors_name = "hue"
 :hi Function guifg=navajowhite ctermfg=lightblue
 :hi MatchParen cterm=none ctermbg=red ctermfg=black
 :hi Structure guifg=green ctermfg=green
-:hi LineNr guifg=grey50 ctermfg=3
+:hi LineNr ctermfg=172 guifg=Grey guibg=Grey90
 :hi Ignore guifg=grey40 cterm=bold ctermfg=7
 :hi Todo guifg=orangered guibg=yellow2
 :hi Directory ctermfg=darkcyan
@@ -55,4 +55,5 @@ let colors_name = "hue"
 :hi Underlined cterm=underline ctermfg=5
 :hi Error guifg=White guibg=Red cterm=bold ctermfg=7 ctermbg=1
 :hi SpellErrors guifg=White guibg=Red cterm=bold ctermfg=7 ctermbg=1
-:hi String ctermfg=cyan ctermbg=none
+":hi String ctermfg=161 ctermbg=none
+:hi String ctermfg=86 ctermbg=none
