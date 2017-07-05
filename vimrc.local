@@ -2,9 +2,9 @@ colo hue						" set hue color scheme
 set t_Co=256					" use 256 colors
 set encoding=utf-8				" utf-8 character encoding
 set tabstop=2					" tab 2 spaces
-set softtabstop=4				" tab inserts a combination of spaces to simulate tab stops at this width.
+set softtabstop=2				" tab inserts a combination of spaces to simulate tab stops at this width.
 set expandtab					" expand tabs into spaces
-set shiftwidth=4				" when using the >> or << commands, shift lines by 4 space
+set shiftwidth=2				" when using the >> or << commands, shift lines by 4 space
 set autoindent					" indent when moving to the next line while writing code
 set fileformat=unix				" convert file to unix file convention
 set textwidth=80				" text wrapping after 80 characters
