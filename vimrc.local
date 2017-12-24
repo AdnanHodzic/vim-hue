@@ -24,5 +24,7 @@ set cursorline					" show a visual line under the cursor's current line
 "match ErrorMsg '\%>80v.\+'		" highlight in red anything > 80 chars
 set lcs=tab:│┈,trail:·,extends:>,precedes:<,nbsp:&	" display tabs spaces
 set laststatus=2				" enable status bar
-set statusline=\ %f%m%r%h%w\ %=%({%{&ff}\|%{(&fenc==\"\"?&enc:&fenc).((exists(\"+bomb\")\ &&\ &bomb)?\",B\":\"\")}%k\|%Y}%)\ %([%l,%v][%p%%]\ %):&		" extend status bar
+set statusline=\ %f%m%r%h%w\ %=%({%{&ff}\|%{(&fenc==\"\"?&enc:&fenc).((exists(\"+bomb\")\ &&\ &bomb)?\",B\":\"\")}%k\|%Y}%)\ %([%l,%v][%p%%]\ %)%#ErrorMsg#%{GitBranchInfoString()}	" extend status bar
 hi StatusLine ctermbg=black ctermfg=cyan	" colorize status bar
+let g:git_branch_status_head_current=1 " show branch info in case git repo
+let g:git_branch_status_nogit="" " show nothing in case != git repo
