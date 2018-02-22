@@ -16,7 +16,12 @@ let python_highlight_all = 1	"enable all Python syntax highlighting features
 set nu							" show line numbers
 set showmatch					" show the matching part of the pair for [] {} and ()
 set list						" display whitespace
-set clipboard=unnamedplus		" all yanking goes to clipboard (install vim-gtk)
+" all yanking goes to clipboard (install vim-gtk)
+if system('uname -s') == "Darwin\n"
+  set clipboard=unnamed "OSX
+else
+  set clipboard=unnamedplus "Linux
+endif
 set paste						" Paste from a windows or from vim (shift + p preserve indent)
 set ignorecase					" case insensitive search
 set cursorline					" show a visual line under the cursor's current line
