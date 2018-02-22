@@ -28,3 +28,4 @@ set statusline=\ %f%m%r%h%w\ %=%({%{&ff}\|%{(&fenc==\"\"?&enc:&fenc).((exists(\"
 hi StatusLine ctermbg=black ctermfg=cyan	" colorize status bar
 let g:git_branch_status_head_current=1 " show branch info in case git repo
 let g:git_branch_status_nogit="" " show nothing in case != git repo
+set backspace=indent,eol,start " fix backspace doesn't work during insert (https://goo.gl/fizWK6)
