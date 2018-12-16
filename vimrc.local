@@ -11,7 +11,7 @@ set textwidth=80				" text wrapping after 80 characters
 set showmatch					" show matching bracets
 set hlsearch					" highlight searches
 syntax on						" enable syntax coloring/highlighting 
-filetype indent plugin on		" automatic indentation for Python code
+filetype indent plugin on		" automatic code indentation
 let python_highlight_all = 1	"enable all Python syntax highlighting features
 set nu							" show line numbers
 set showmatch					" show the matching part of the pair for [] {} and ()
@@ -35,4 +35,6 @@ let g:git_branch_status_head_current=1 " show branch info in case git repo
 let g:git_branch_status_nogit="" " show nothing in case != git repo
 set backspace=indent,eol,start " fix backspace doesn't work during insert (https://goo.gl/fizWK6)
 " json auto format/indent/lint (experimental)
-autocmd FileType json autocmd BufWritePre <buffer> %!python -m json.tool
+" autocmd FileType json autocmd BufWritePre <buffer> %!python -m json.tool
+" enable Pathogen runtime
+execute pathogen#infect()
