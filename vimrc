@@ -10,8 +10,6 @@ set fileformat=unix				" convert file to unix file convention
 set textwidth=80				" text wrapping after 80 characters
 set showmatch					" show matching bracets
 set hlsearch					" highlight searches
-syntax on						" enable syntax coloring/highlighting 
-filetype indent plugin on		" automatic code indentation
 let python_highlight_all = 1	"enable all Python syntax highlighting features
 set nu							" show line numbers
 set showmatch					" show the matching part of the pair for [] {} and ()
@@ -24,17 +22,18 @@ else
 endif
 set paste						" Paste from a windows or from vim (shift + p preserve indent)
 set ignorecase					" case insensitive search
+set laststatus=2				" enable status bar
 set cursorline					" show a visual line under the cursor's current line
-:hi CursorLine   cterm=bold ctermbg=black guibg=darkred		" set cursor line bold with black background
 "match ErrorMsg '\%>80v.\+'		" highlight in red anything > 80 chars
 set lcs=tab:│┈,trail:·,extends:>,precedes:<,nbsp:&	" display tabs spaces
-set laststatus=2				" enable status bar
 set statusline=\ %f%m%r%h%w\ %=%({%{&ff}\|%{(&fenc==\"\"?&enc:&fenc).((exists(\"+bomb\")\ &&\ &bomb)?\",B\":\"\")}%k\|%Y}%)\ %([%l,%v][%p%%]\ %)%#ErrorMsg#%{GitBranchInfoString()}	" extend status bar
-hi StatusLine ctermbg=black ctermfg=cyan	" colorize status bar
 let g:git_branch_status_head_current=1 " show branch info in case git repo
 let g:git_branch_status_nogit="" " show nothing in case != git repo
 set backspace=indent,eol,start " fix backspace doesn't work during insert (https://goo.gl/fizWK6)
 " json auto format/indent/lint (experimental)
 " autocmd FileType json autocmd BufWritePre <buffer> %!python -m json.tool
 " enable Pathogen runtime
-execute pathogen#infect()
+set nocp
+call pathogen#infect()
+syntax on						" enable syntax coloring/highlighting 
+filetype indent plugin on		" automatic code indentation
