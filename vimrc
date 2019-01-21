@@ -20,6 +20,10 @@ if system('uname -s') == "Darwin\n"
 else
   set clipboard=unnamedplus "Linux
 endif
+" fix (mouse) on selection copy/paste behaviour
+runtime! defaults.vim
+let g:skip_defaults_vim = 1
+set mouse=
 set paste						" Paste from a windows or from vim (shift + p preserve indent)
 set ignorecase					" case insensitive search
 set laststatus=2				" enable status bar
