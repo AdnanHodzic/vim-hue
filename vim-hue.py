@@ -6,7 +6,7 @@ from distutils.dir_util import copy_tree
 # global vars
 userhome = os.path.expanduser('~')
 vim = userhome + "/.vim"
-hueSrcDir = "."
+hueSrcDir = os.getcwd()
 vimConfDir = vim
 
 # dir create func
