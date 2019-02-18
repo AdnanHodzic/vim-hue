@@ -26,18 +26,10 @@ def create_vim_dir(target_dir):
             shutil.move(vim, vimBakDir)
 
 def vim_conf():
-    # print user's home directory
-    print("User's home Dir: " + userhome)
-
-    # print username by splitting path based on OS
-    print("username: " + os.path.split(userhome)[-1])
-
-    # ToDo: if vim dir exists backup and output bak loc
-
     # create user local vim dir
     # ToDo: create necessary dir structure for global vimConfDir
     create_vim_dir(vim)
-    print("Vim configuration stored in: " + vim)
+    print("New Vim (vim-hue) configuration stored in: " + vim)
 
     # populate vimConfDir with hueSrcDir
     copy_tree(hueSrcDir, vimConfDir)
