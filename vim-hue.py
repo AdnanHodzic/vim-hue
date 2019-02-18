@@ -19,17 +19,21 @@ def create_vim_dir(target_dir):
         # necessary for overwrite if vimBakDir exists
         if os.path.exists(vimBakDir):
             shutil.rmtree(vimBakDir)
-            print("Found and backed up existing Vim configuration: " + vimBakDir)
+            print("Found and backed up existing Vim configuration:\n" + vimBakDir +  "\n")
             shutil.move(vim, vimBakDir)
         else:
-            print("Found and backed up existing Vim configuration: " + vimBakDir)
+            print("Found and backed up existing Vim configuration:\n" + vimBakDir)
             shutil.move(vim, vimBakDir)
 
 def vim_conf():
-    # create user local vim dir
-    # ToDo: create necessary dir structure for global vimConfDir
+
+    # ToDo:
+    # - create options menu
+    # - create necessary ops + dir structure for global vimConfDir
+    print("\n" + 20 * "-" + " vim-hue " + 20 * "-" + "\n")
     create_vim_dir(vim)
-    print("New Vim (vim-hue) configuration stored in: " + vim)
+    print("New Vim (vim-hue) configuration stored in:\n" + vim)
+    print("\n" + 49 * "-" + "\n")
 
     # populate vimConfDir with hueSrcDir
     copy_tree(hueSrcDir, vimConfDir)
