@@ -1,22 +1,31 @@
 #!/usr/env/bin python3
 
 import os
+import shutil
 from distutils.dir_util import copy_tree
 
 # global vars
 userhome = os.path.expanduser('~')
 vim = userhome + "/.vim"
+vimBakDir = vim + ".backup"
 hueSrcDir = os.getcwd()
 vimConfDir = vim
 
-# dir create func
-def create_dir(target_dir):
+# dir vim (conf) dir func
+def create_vim_dir(target_dir):
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
-    else:
-       os.system("Backed up existing " + vim + "dir")
+    elif os.path.exists(target_dir):
+        # necessary for overwrite if vimBakDir exists
+        if os.path.exists(vimBakDir):
+            shutil.rmtree(vimBakDir)
+            print("Found and backed up existing Vim configuration: " + vimBakDir)
+            shutil.move(vim, vimBakDir)
+        else:
+            print("Found and backed up existing Vim configuration: " + vimBakDir)
+            shutil.move(vim, vimBakDir)
 
-def user_path():
+def vim_conf():
     # print user's home directory
     print("User's home Dir: " + userhome)
 
@@ -27,10 +36,10 @@ def user_path():
 
     # create user local vim dir
     # ToDo: create necessary dir structure for global vimConfDir
-    create_dir(vim)
-    print("User's vim dir: " + vim)
+    create_vim_dir(vim)
+    print("Vim configuration stored in: " + vim)
 
     # populate vimConfDir with hueSrcDir
     copy_tree(hueSrcDir, vimConfDir)
 
-user_path()
+vim_conf()
