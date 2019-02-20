@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import subprocess
 from distutils.dir_util import copy_tree
 
 # global vars
@@ -26,16 +27,24 @@ def create_vim_dir(target_dir):
             shutil.move(vim, vimBakDir)
 
 def vim_conf():
-
     # ToDo:
     # - create options menu
     # - create necessary ops + dir structure for global vimConfDir
+    # - for global config make root check
     print("\n" + 20 * "-" + " vim-hue " + 20 * "-" + "\n")
     create_vim_dir(vim)
     print("New Vim (vim-hue) configuration stored in:\n" + vim)
     print("\n" + 49 * "-" + "\n")
-
     # populate vimConfDir with hueSrcDir
     copy_tree(hueSrcDir, vimConfDir)
 
-vim_conf()
+def vim_ver_check():
+    getVimVer = subprocess.getoutput("vim --version | grep \"VIM - Vi IMproved\" | cut -d\" \" -f5 | grep -oE \"^\s*[0-9]+\"")
+    vimVer = int(getVimVer)
+
+    if (vimVer < 8 ):
+        print("Only Vim version >= 8 are supported")
+        quit()
+
+#vim_conf()
+vim_ver_check()
