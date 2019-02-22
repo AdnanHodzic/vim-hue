@@ -3,7 +3,9 @@
 import os
 import shutil
 import subprocess
+import click
 from distutils.dir_util import copy_tree
+from sys import platform as _platform
 
 # global vars
 userhome = os.path.expanduser('~')
@@ -71,8 +73,42 @@ def vim_ver_check():
         print("Only Vim version >= 8 are supported")
         quit()
 
+def detect_linux():
+    if _platform != "linux":
+        print("\nError: system wide installation is only supported on Linux\n")
+        quit()
+
 vim_ver_check()
 # ToDo:
-# Add to options menu
+# Create root check func & add it to sys wide in/uninstall
 #vim_conf()
 #global_vim_conf()
+
+@click.command()
+@click.option('--install', type=click.Choice(['user', 'system']), help='Install for existing user or all users system wide (Linux only)')
+@click.option('--uninstall', type=click.Choice(['user', 'system']), help='Uninstall for existing user or all users system wide (Linux only)')
+
+def cli(install, uninstall):
+    """vim-hue cli"""
+    click.echo(install)
+    if install == "user":
+        #print("Running user install")
+        click.echo('Running user install')
+    elif install == "system":
+        detect_linux()
+        #print("Installing system wide")
+        click.echo('Installing system wide')
+    if uninstall == "user":
+        #print("Running user install")
+        click.echo('Running user uninstall')
+    elif uninstall == "system":
+        detect_linux()
+        #print("Installing system wide")
+        click.echo('Uninstalling system wide')
+
+    else:
+        print("vim-hue show options\n")
+
+if __name__ == '__main__':
+    cli()
+
