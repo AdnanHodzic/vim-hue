@@ -23,10 +23,6 @@ def create_dir(target_dir):
         os.makedirs(target_dir)
 
 def vim_conf():
-    # ToDo:
-    # - create options menu
-    # - create necessary ops + dir structure for global vimConfDir
-    # - for global config make root check
     print("\n" + 20 * "-" + " vim-hue " + 20 * "-" + "\n")
 
     create_dir(vim)
@@ -78,11 +74,11 @@ def detect_linux():
         print("\nError: system wide installation is only supported on Linux\n")
         quit()
 
+def root_check():
+    if os.geteuid() != 0:
+        exit("\nMust be run as root (i.e: 'sudo python3 vim-hue.py').\n")
+
 vim_ver_check()
-# ToDo:
-# Create root check func & add it to sys wide in/uninstall
-#vim_conf()
-#global_vim_conf()
 
 @click.command()
 @click.option('--install', type=click.Choice(['user', 'system']), help='Install for existing user or all users system wide (Linux only)')
@@ -96,6 +92,8 @@ def cli(install, uninstall):
         click.echo('Running user install')
     elif install == "system":
         detect_linux()
+        root_check()
+        print("System install")
         #print("Installing system wide")
         click.echo('Installing system wide')
     if uninstall == "user":
