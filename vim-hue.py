@@ -129,6 +129,7 @@ def cli(install, uninstall):
         print("-----\n")
 
         call(["python3", "vim-hue.py", "--help"])
+        footer()
     else:
         if install == "user":
             vim_ver_check()
