@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import click
+import sys
 from subprocess import call
 from distutils.dir_util import copy_tree
 from sys import platform as _platform
@@ -30,13 +31,14 @@ def footer():
     print("\n" + 79 * "-" + "\n")
 
 def vim_conf():
-    print("\n" + 17 * "-" + " Performing vim-hue install for current user " + 17 * "-" + "\n")
+    print("\n" + 16 * "-" + " vim-hue - performing install for current user " + 16 * "-" + "\n")
 
     create_dir(vim)
     # necessary for overwrite if vimBakDir exists
     if os.path.exists(vimBakDir):
         shutil.rmtree(vimBakDir)
         print("Found and backed up existing Vim configuration:\n" + vimBakDir +  "\n")
+        print("\nPerforming vim-hue install for \"" + os.path.split(userhome)[-1] + "\" user")
         shutil.move(vim, vimBakDir)
     else:
         print("Found and backed up existing Vim configuration:\n" + vimBakDir)
@@ -48,7 +50,7 @@ def vim_conf():
     copy_tree(hueSrcDir, vimConfDir)
 
 def global_vim_conf():
-    print("\n" + 12 * "-" + " Performing vim-hue system wide install for every user " + 12 * "-" + "\n")
+    print("\n" + 11 * "-" + " vim-hue - performing system wide install for every user " + 11 * "-" + "\n")
     create_dir(globalVim)
     # necessary for overwrite if globalVimBakDir exists
     if os.path.exists(globalVimBakDir):
@@ -86,31 +88,32 @@ def root_check():
 @click.option('--uninstall', type=click.Choice(['user', 'system']), help='Uninstall for current user or all users - system wide (Linux only)')
 
 def cli(install, uninstall):
-    # print --help by default when vim-hue is run
-    header()
-    print("vim-hue - ToDo: Add nice description\n")
-    print("Example usage: python3 vim-hue.py --install user\n")
-    print("-----\n")
+    # print --help by default if no argument is provided when vim-hue is run
+    if len(sys.argv) == 1:
+        header()
+        print("vim-hue - ToDo: Add nice description\n")
+        print("Example usage: python3 vim-hue.py --install user\n")
+        print("-----\n")
 
-    call(["python3", "vim-hue.py", "--help"])
-
-    if install == "user":
-        vim_ver_check()
-        vim_conf()
-    elif install == "system":
-        vim_ver_check()
-        detect_linux()
-        root_check()
-        global_vim_conf()
-    if uninstall == "user":
-        click.echo('\nPerforming vim-hue uninstall for current user')
-        vim_ver_check()
-    elif uninstall == "system":
-        click.echo('\nPerforming vim-hue system wide uninstall for every user')
-        vim_ver_check()
-        detect_linux()
-        root_check()
-    footer()
+        call(["python3", "vim-hue.py", "--help"])
+    else:
+        if install == "user":
+            vim_ver_check()
+            vim_conf()
+        elif install == "system":
+            vim_ver_check()
+            detect_linux()
+            root_check()
+            global_vim_conf()
+        elif uninstall == "user":
+            click.echo('\nPerforming vim-hue uninstall for current user')
+            vim_ver_check()
+        elif uninstall == "system":
+            click.echo('\nPerforming vim-hue system wide uninstall for every user')
+            vim_ver_check()
+            detect_linux()
+            root_check()
+        footer()
 
 if __name__ == '__main__':
     cli()
