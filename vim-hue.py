@@ -124,8 +124,8 @@ def cli(install, uninstall):
     # print --help by default if no argument is provided when vim-hue is run
     if len(sys.argv) == 1:
         header()
-        print("vim-hue - ToDo: Add nice description\n")
-        print("Example usage: python3 vim-hue.py --install user\n")
+        print("vim-hue - colorful Vim config & theme for all your SRE/DevOps needs\n")
+        print("\nExample usage: python3 vim-hue.py --install user\n")
         print("-----\n")
 
         call(["python3", "vim-hue.py", "--help"])

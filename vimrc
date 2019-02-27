@@ -14,7 +14,7 @@ let python_highlight_all = 1	"enable all Python syntax highlighting features
 set nu							" show line numbers
 set showmatch					" show the matching part of the pair for [] {} and ()
 set list						" display whitespace
-" all yanking goes to clipboard (install vim-gtk)
+" all yanking goes to clipboard (linux install vim-gtk)
 if system('uname -s') == "Darwin\n"
   set clipboard=unnamed "OSX
 else
@@ -39,5 +39,5 @@ set backspace=indent,eol,start " fix backspace doesn't work during insert (https
 " enable Pathogen runtime
 set nocp
 call pathogen#infect()
-syntax on						" enable syntax coloring/highlighting 
+syntax on						" enable syntax coloring/highlighting
 filetype indent plugin on		" automatic code indentation
