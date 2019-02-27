@@ -13,6 +13,8 @@ It features "vim-hue" dark Vim colorscheme and complete Vim configuration. Ideal
 
 *Please note:* vim-hue will only work on Linux and MacOS. I strongly suggest using "dark mode" or using a dark colorscheme on your terminal of choice. Only Vim >= 8 version is supported.
 
+![vim-hue running on MacOS (iTerm2)](https://foolcontrol.org/wp-content/uploads/2019/02/vim-hue-screenshot-macos.png)
+
 ### Sounds good, how do I get vim-hue?
 
 #### Get vim-hue source code:
@@ -27,7 +29,7 @@ All requirements can be installed by running:
 
 `sudo apt install vim python3 python3-pip python3-distutils python3-click -y`
 
-That's it, you're ready to run vim-hue installer!
+That's it, you're ready to [run vim-hue installer](https://github.com/AdnanHodzic/vim-hue#vim-hue---installer)!
 
 ##### Requirements installation for MacOS
 
@@ -51,7 +53,7 @@ brew install python3 vim
 pip3 install click
 ```
 
-Now you're ready to run vim-hue installer!
+Now you're ready to [run vim-hue installer](https://github.com/AdnanHodzic/vim-hue#vim-hue---installer)!
 
 ### vim-hue - installer
 
