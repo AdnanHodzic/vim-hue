@@ -1,4 +1,11 @@
 #!/usr/env/bin python3
+#
+# vim-hue - colorful Vim config & theme for all your SRE/DevOps needs
+#
+# Blog post: https://foolcontrol.org/?p=3051
+#
+# Copyleft: Adnan Hodzic <adnan@hodzic.org>
+# License: GPLv3
 
 import os
 import shutil
