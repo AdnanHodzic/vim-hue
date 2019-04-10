@@ -9,6 +9,7 @@ It features "vim-hue" dark Vim colorscheme and complete Vim configuration. Ideal
 * Terraform
 * Ansible
 * Docker (Dockerfile)
+* Kubernetes (templates)
 * et cetera ...
 
 *Please note:* vim-hue will only work on Linux and MacOS. I strongly suggest using "dark mode" or using a dark colorscheme on your terminal of choice. Only Vim >= 8 version is supported.
