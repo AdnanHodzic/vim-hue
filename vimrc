@@ -8,11 +8,10 @@ set shiftwidth=2				" when using the >> or << commands, shift lines by 4 space
 set autoindent					" indent when moving to the next line while writing code
 set fileformat=unix				" convert file to unix file convention
 set textwidth=80				" text wrapping after 80 characters
-set showmatch					" show matching bracets
+set showmatch					" show matching brackets
 set hlsearch					" highlight searches
 let python_highlight_all = 1	"enable all Python syntax highlighting features
 set nu							" show line numbers
-set showmatch					" show the matching part of the pair for [] {} and ()
 set list						" display whitespace
 " all yanking goes to clipboard (linux install vim-gtk)
 if system('uname -s') == "Darwin\n"
