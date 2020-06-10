@@ -12,7 +12,7 @@ endif
 let colors_name = "hue"
 :hi Normal guifg=White guibg=grey35
 :hi Cursor guibg=khaki guifg=slategrey
-:hi CursorLine cterm=bold ctermbg=black guibg=darkred
+:hi CursorLine ctermfg=NONE ctermbg=16 cterm=NONE guifg=NONE guibg=#373b3c gui=NONE
 :hi VertSplit guibg=#c2bfa5 guifg=grey40 gui=none cterm=reverse
 :hi Folded guibg=black guifg=grey40 ctermfg=grey ctermbg=darkgrey
 :hi FoldColumn guibg=black guifg=grey20 ctermfg=4 ctermbg=7
@@ -27,7 +27,7 @@ let colors_name = "hue"
 :hi StatusLineNC ctermbg=black ctermfg=cyan
 :hi Title guifg=gold gui=bold cterm=bold ctermfg=yellow
 :hi Statement guifg=CornflowerBlue ctermfg=lightblue
-:hi Visual gui=none guifg=khaki guibg=olivedrab cterm=reverse
+:hi Visual ctermfg=NONE ctermbg=57 cterm=NONE guifg=NONE guibg=#2E3436 gui=NONE
 :hi WarningMsg guifg=salmon ctermfg=1
 :hi String guifg=LightBlue ctermfg=blue
 :hi Comment term=bold ctermfg=10 guifg=grey50
