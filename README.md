@@ -14,7 +14,7 @@ It features "vim-hue" dark Vim colorscheme and complete Vim configuration. Ideal
 
 *Please note:* vim-hue will only work on Linux and MacOS. I strongly suggest using "dark mode" or using a dark colorscheme on your terminal of choice. Only Vim >= 8 version is supported.
 
-![vim-hue running on MacOS (iTerm2)](https://foolcontrol.org/wp-content/uploads/2019/02/vim-hue-screenshot-macos.png)
+<img width="800" alt="[vim-hue running on MacOS (iTerm2)" src="https://github.com/user-attachments/assets/a88bfb38-571a-491d-ba01-d3ea975f510b">
 
 ### Sounds good, how do I get vim-hue?
 
