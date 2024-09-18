@@ -106,7 +106,7 @@ def global_vim_conf_remove():
     print("\nUninstall complete for all users (system wide).")
 
 def vim_ver_check():
-    getVimVer = subprocess.getoutput("vim --version | grep \"VIM - Vi IMproved\" | cut -d\" \" -f5 | grep -oE \"^\s*[0-9]+\"")
+    getVimVer = subprocess.getoutput("vim --version | grep \"VIM - Vi IMproved\" | cut -d\" \" -f5 | grep -oE \"^s*[0-9]+\"")
     vimVer = int(getVimVer)
 
     if (vimVer < 8 ):
