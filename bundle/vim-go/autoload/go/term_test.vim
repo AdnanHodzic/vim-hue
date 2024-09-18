@@ -3,51 +3,131 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 func! Test_GoTermNewMode()
-  if !has('nvim')
+  if !(has('nvim') || has('terminal'))
     return
   endif
 
+  let l:wd = getcwd()
   try
+    let g:go_gopls_enabled = 0
     let l:filename = 'term/term.go'
     let l:tmp = gotest#load_fixture(l:filename)
-    exe 'cd ' . l:tmp . '/src/term'
+    call go#util#Chdir(l:tmp . '/src/term')
 
     let expected = expand('%:p')
+    let l:winid = win_getid()
+
+    let l:expectedwindows = len(getwininfo()) + 1
 
     let cmd = "go run ".  go#util#Shelljoin(go#tool#Files())
 
     set nosplitright
-    call go#term#newmode(0, cmd, '')
+
+    let l:jobid = go#term#new(0, cmd, &errorformat)
+
+    call go#job#Wait(l:jobid)
+
     let actual = expand('%:p')
     call assert_equal(actual, l:expected)
+    call assert_equal(l:expectedwindows, len(getwininfo()))
 
   finally
+    call win_gotoid(l:winid)
+    only!
+    call go#util#Chdir(l:wd)
     call delete(l:tmp, 'rf')
   endtry
 endfunc
 
 func! Test_GoTermNewMode_SplitRight()
-  if !has('nvim')
+  if !(has('nvim') || has('terminal'))
     return
   endif
 
+  let l:wd = getcwd()
   try
+    let g:go_gopls_enabled = 0
     let l:filename = 'term/term.go'
     let l:tmp = gotest#load_fixture(l:filename)
-    exe 'cd ' . l:tmp . '/src/term'
+    call go#util#Chdir(l:tmp . '/src/term')
 
     let expected = expand('%:p')
+    let l:winid = win_getid()
+
+    let l:expectedwindows = len(getwininfo()) + 1
 
     let cmd = "go run ".  go#util#Shelljoin(go#tool#Files())
 
     set splitright
-    call go#term#newmode(0, cmd, '')
+
+    let l:jobid = go#term#new(0, cmd, &errorformat)
+
+    call go#job#Wait(l:jobid)
+
+    let actual = expand('%:p')
+    call assert_equal(actual, l:expected)
+    call assert_equal(l:expectedwindows, len(getwininfo()))
+
+  finally
+    call win_gotoid(l:winid)
+    only!
+    call go#util#Chdir(l:wd)
+    call delete(l:tmp, 'rf')
+    set nosplitright
+  endtry
+endfunc
+
+func! Test_GoTermReuse()
+  if !(has('nvim') || has('terminal'))
+    return
+  endif
+
+  let l:wd = getcwd()
+  try
+    let g:go_gopls_enabled = 0
+    let l:filename = 'term/term.go'
+    let l:tmp = gotest#load_fixture(l:filename)
+
+    call go#util#Chdir(l:tmp . '/src/term')
+
+    let l:winid = win_getid()
+    let expected = expand('%:p')
+
+    let l:expectedwindows = len(getwininfo())+1
+
+    let cmd = "go run ".  go#util#Shelljoin(go#tool#Files())
+
+    set nosplitright
+
+    " prime the terminal window
+    let l:jobid = go#term#new(0, cmd, &errorformat)
+
+    call go#job#Wait(l:jobid)
+
+    let g:go_term_reuse = 1
+
+    let l:jobid = go#term#new(0, cmd, &errorformat)
+
+    call go#job#Wait(l:jobid)
+
+    let actual = expand('%:p')
+    call assert_equal(actual, l:expected)
+    call assert_equal(l:expectedwindows, len(getwininfo()))
+
+    let l:jobid = go#term#new(0, cmd, &errorformat)
+
+    call go#job#Wait(l:jobid)
+
     let actual = expand('%:p')
     call assert_equal(actual, l:expected)
 
+    call assert_equal(l:expectedwindows, len(getwininfo()))
+
   finally
+    call win_gotoid(l:winid)
+    only!
+    call go#util#Chdir(l:wd)
     call delete(l:tmp, 'rf')
-    set nosplitright
   endtry
 endfunc
 

@@ -49,26 +49,23 @@ endfunction
 function! go#list#Populate(listtype, items, title) abort
   if a:listtype == "locationlist"
     call setloclist(0, a:items, 'r')
-
-    " The last argument ({what}) is introduced with 7.4.2200:
-    " https://github.com/vim/vim/commit/d823fa910cca43fec3c31c030ee908a14c272640
-    if has("patch-7.4.2200") | call setloclist(0, [], 'a', {'title': a:title}) | endif
+    call setloclist(0, [], 'a', {'title': a:title})
   else
     call setqflist(a:items, 'r')
-    if has("patch-7.4.2200") | call setqflist([], 'a', {'title': a:title}) | endif
+    call setqflist([], 'a', {'title': a:title})
   endif
 endfunction
 
 " Parse parses the given items based on the specified errorformat and
 " populates the list.
-function! go#list#ParseFormat(listtype, errformat, items, title) abort
+function! go#list#ParseFormat(listtype, errformat, items, title, add) abort
   " backup users errorformat, will be restored once we are finished
   let old_errorformat = &errorformat
 
   " parse and populate the location list
   let &errorformat = a:errformat
   try
-    call go#list#Parse(a:listtype, a:items, a:title)
+    call go#list#Parse(a:listtype, a:items, a:title, a:add)
   finally
     "restore back
     let &errorformat = old_errorformat
@@ -77,13 +74,26 @@ endfunction
 
 " Parse parses the given items based on the global errorformat and
 " populates the list.
-function! go#list#Parse(listtype, items, title) abort
+function! go#list#Parse(listtype, items, title, add) abort
+  let l:list = []
+  if a:add
+    let l:list = go#list#Get(a:listtype)
+  endif
+
   if a:listtype == "locationlist"
-    lgetexpr a:items
-    if has("patch-7.4.2200") | call setloclist(0, [], 'a', {'title': a:title}) | endif
+    if a:add
+      laddexpr a:items
+    else
+      lgetexpr a:items
+    endif
+    call setloclist(0, [], 'a', {'title': a:title})
   else
-    cgetexpr a:items
-    if has("patch-7.4.2200") | call setqflist([], 'a', {'title': a:title}) | endif
+    if a:add
+      caddexpr a:items
+    else
+      cgetexpr a:items
+    endif
+    call setqflist([], 'a', {'title': a:title})
   endif
 endfunction
 
@@ -138,6 +148,8 @@ endfunction
 " in g:go_list_type_commands.
 let s:default_list_type_commands = {
       \ "GoBuild":              "quickfix",
+      \ "GoDiagnostics":        "quickfix",
+      \ "GoDebug":              "quickfix",
       \ "GoErrCheck":           "quickfix",
       \ "GoFmt":                "locationlist",
       \ "GoGenerate":           "quickfix",
@@ -151,7 +163,9 @@ let s:default_list_type_commands = {
       \ "GoRun":                "quickfix",
       \ "GoTest":               "quickfix",
       \ "GoVet":                "quickfix",
-      \ "_guru":                "locationlist",
+      \ "GoReferrers":          "locationlist",
+      \ "GoImplements":         "locationlist",
+      \ "GoCallers":            "locationlist",
       \ "_term":                "locationlist",
       \ "_job":                 "locationlist",
   \ }

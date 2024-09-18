@@ -48,52 +48,96 @@ endfunc
 
 func! Test_GoTestCompilerError() abort
   let expected = [
-        \ {'lnum': 6, 'bufnr': 6, 'col': 22, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'syntax error: unexpected newline, expecting comma or )'}
+        \ {'lnum': 6, 'bufnr': 6, 'col': 22, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'syntax error: unexpected newline in argument list; possibly missing comma or )'}
       \ ]
+  let [l:goversion, l:err] = go#util#Exec(['go', 'env', 'GOVERSION'])
+  let l:goversion = split(l:goversion, "\n")[0]
+  if l:goversion < 'go1.19'
+    let expected = [
+          \ {'lnum': 6, 'bufnr': 6, 'col': 22, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'syntax error: unexpected newline, expecting comma or )'}
+        \ ]
+  endif
+
   call s:test('compilerror/compilerror_test.go', expected)
 endfunc
 
 func! Test_GoTestTimeout() abort
   let expected = [
-        \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'panic: test timed out after 500ms'}
+        \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'panic: test timed out after 500ms'},
+        \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'running tests:'},
+        \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'TestRunning (0.000s)'},
+        \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'TestRunningAlso (0.000s)'},
+        \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'TestSleep (0.000s)'},
       \ ]
+
+  let [l:goversion, l:err] = go#util#Exec(['go', 'env', 'GOVERSION'])
+  let l:goversion = split(l:goversion, "\n")[0]
+  if l:goversion < 'go1.20'
+    let expected = [
+          \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'panic: test timed out after 500ms'},
+        \ ]
+  endif
 
   let g:go_test_timeout="500ms"
   call s:test('timeout/timeout_test.go', expected)
-  unlet g:go_test_timeout
 endfunc
 
 func! Test_GoTestShowName() abort
   let expected = [
         \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'TestHelloWorld'},
-        \ {'lnum': 6, 'bufnr': 9, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'so long'},
+        \ {'lnum': 6, 'bufnr': 8, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'so long'},
         \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'TestHelloWorld/sub'},
-        \ {'lnum': 9, 'bufnr': 9, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'thanks for all the fish'},
+        \ {'lnum': 9, 'bufnr': 8, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'thanks for all the fish'},
       \ ]
 
   let g:go_test_show_name=1
   call s:test('showname/showname_test.go', expected)
-  unlet g:go_test_show_name
 endfunc
 
 func! Test_GoTestVet() abort
   let expected = [
-        \ {'lnum': 6, 'bufnr': 16, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'Errorf format %v reads arg #1, but call has 0 args'},
+        \ {'lnum': 6, 'bufnr': 11, 'col': 2, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'fmt.Errorf format %v reads arg #1, but call has 0 args'},
       \ ]
+
+  let [l:goversion, l:err] = go#util#Exec(['go', 'env', 'GOVERSION'])
+  let l:goversion = split(l:goversion, "\n")[0]
+  if l:goversion < 'go1.18'
+  let expected = [
+        \ {'lnum': 6, 'bufnr': 11, 'col': 2, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'Errorf format %v reads arg #1, but call has 0 args'},
+      \ ]
+  endif
+
   call s:test('veterror/veterror.go', expected)
 endfunc
 
 func! Test_GoTestTestCompilerError() abort
   let expected = [
-        \ {'lnum': 10, 'bufnr': 11, 'col': 16, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'cannot use r (type struct {}) as type io.Reader in argument to ioutil.ReadAll:'},
-        \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'struct {} does not implement io.Reader (missing Read method)'}
+        \ {'lnum': 10, 'bufnr': 9, 'col': 17, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'cannot use r (variable of type struct{}) as io.Reader value in argument to ioutil.ReadAll: struct{} does not implement io.Reader (missing method Read)'},
       \ ]
+
+  let [l:goversion, l:err] = go#util#Exec(['go', 'env', 'GOVERSION'])
+  let l:goversion = split(l:goversion, "\n")[0]
+  if l:goversion < 'go1.20'
+    let expected = [
+        \ {'lnum': 10, 'bufnr': 9, 'col': 17, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'cannot use r (variable of type struct{}) as type io.Reader in argument to ioutil.ReadAll:'},
+        \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'struct{} does not implement io.Reader (missing Read method)'}
+        \ ]
+  endif
 
   call s:test('testcompilerror/testcompilerror_test.go', expected)
 endfunc
 
+func! Test_GoTestExample() abort
+  let expected = [
+        \ {'lnum': 0, 'bufnr': 0, 'col': 0, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'ExampleHelloWorld'}
+      \ ]
+  call s:test('example/example_test.go', expected)
+endfunc
+
 func! s:test(file, expected, ...) abort
+  let g:go_gopls_enabled = 0
   let $GOPATH = fnameescape(fnamemodify(getcwd(), ':p')) . 'test-fixtures/test'
+  call go#util#Chdir(printf('%s/src/%s', $GOPATH, fnamemodify(a:file, ':h')))
   silent exe 'e ' . $GOPATH . '/src/' . a:file
 
   " clear the quickfix lists

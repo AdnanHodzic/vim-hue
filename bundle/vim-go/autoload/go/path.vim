@@ -28,11 +28,11 @@ function! go#path#GoPath(...) abort
       let s:initial_go_path = ""
     endif
 
-    echon "vim-go: " | echohl Function | echon "GOPATH restored to ". $GOPATH | echohl None
+    call go#util#EchoInfo("GOPATH restored to ". $GOPATH)
     return
   endif
 
-  echon "vim-go: " | echohl Function | echon "GOPATH changed to ". a:1 | echohl None
+  call go#util#EchoInfo("GOPATH changed to ". a:1)
   let s:initial_go_path = $GOPATH
   let $GOPATH = a:1
 endfunction
@@ -69,80 +69,27 @@ function! s:HasPath(path) abort
   return hasA || hasB
 endfunction
 
-" Detect returns the current GOPATH. If a package manager is used, such as
-" Godeps, GB, it will modify the GOPATH so those directories take precedence
-" over the current GOPATH. It also detects diretories whose are outside
-" GOPATH.
-function! go#path#Detect() abort
-  let gopath = go#path#Default()
-
-  let current_dir = fnameescape(expand('%:p:h'))
-
-  " TODO(arslan): this should be changed so folders or files should be
-  " fetched from a customizable list. The user should define any new package
-  " management tool by it's own.
-
-  " src folders outside $GOPATH
-  let src_roots = finddir("src", current_dir .";", -1)
-
-  " for cases like GOPATH/src/foo/src/bar, pick up GOPATH/src instead of
-  " GOPATH/src/foo/src
-  let src_root = ""
-  if len(src_roots) > 0
-    let src_root = src_roots[-1]
-  endif
-
-  if !empty(src_root)
-    let src_path = fnamemodify(src_root, ':p:h:h') . go#util#PathSep()
-
-    " gb vendor plugin
-    " (https://github.com/constabulary/gb/tree/master/cmd/gb-vendor)
-    let gb_vendor_root = src_path . "vendor" . go#util#PathSep()
-    if isdirectory(gb_vendor_root) && !s:HasPath(gb_vendor_root)
-      let gopath = gb_vendor_root . go#util#PathListSep() . gopath
-    endif
-
-    if !s:HasPath(src_path)
-      let gopath =  src_path . go#util#PathListSep() . gopath
-    endif
-  endif
-
-  " Godeps
-  let godeps_root = finddir("Godeps", current_dir .";")
-  if !empty(godeps_root)
-    let godeps_path = join([fnamemodify(godeps_root, ':p:h:h'), "Godeps", "_workspace" ], go#util#PathSep())
-
-    if !s:HasPath(godeps_path)
-      let gopath =  godeps_path . go#util#PathListSep() . gopath
-    endif
-  endif
-
-  " Fix up the case where initial $GOPATH is empty,
-  " and we end up with a trailing :
-  let gopath = substitute(gopath, ":$", "", "")
-  return gopath
-endfunction
-
 " BinPath returns the binary path of installed go tools.
 function! go#path#BinPath() abort
-  let bin_path = go#config#BinPath()
-  if bin_path != ""
-    return bin_path
+  let l:bin_path = go#config#BinPath()
+  if l:bin_path isnot ""
+    return l:bin_path
   endif
 
-  " check if our global custom path is set, if not check if $GOBIN is set so
+  " check if our global custom path is set, if not check if GOBIN is set so
   " we can use it, otherwise use default GOPATH
-  if $GOBIN != ""
-    let bin_path = $GOBIN
+  let l:bin_path = go#util#env('gobin')
+  if l:bin_path isnot ''
+    let l:bin_path = $GOBIN
   else
-    let go_paths = split(go#path#Default(), go#util#PathListSep())
-    if len(go_paths) == 0
-      return "" "nothing found
+    let l:go_paths = split(go#path#Default(), go#util#PathListSep())
+    if len(l:go_paths) == 0
+      return '' "nothing found
     endif
-    let bin_path = expand(go_paths[0] . "/bin/")
+    let l:bin_path = expand(l:go_paths[0] . '/bin/')
   endif
 
-  return bin_path
+  return l:bin_path
 endfunction
 
 " CheckBinPath checks whether the given binary exists or not and returns the
@@ -203,6 +150,42 @@ endfunction
 
 function! s:CygwinPath(path)
    return substitute(a:path, '\\', '/', "g")
+endfunction
+
+" go#path#ToURI converts path to a file URI. path should be an absolute path.
+" Relative paths cannot be properly converted to a URI; when path is a
+" relative path, the file scheme will not be prepended.
+function! go#path#ToURI(path)
+  let l:absolute = !go#util#IsWin() && a:path[0] is# '/'
+  let l:prefix = ''
+  let l:path = a:path
+
+  if go#util#IsWin() && l:path[1:2] is# ':\'
+    let l:absolute = 1
+    let l:prefix = '/' . l:path[0:1]
+    let l:path = l:path[2:]
+  endif
+
+  return substitute(
+  \   (l:absolute ? 'file://' : '') . l:prefix . go#uri#EncodePath(l:path),
+  \   '\\',
+  \   '/',
+  \   'g',
+  \)
+endfunction
+
+function! go#path#FromURI(uri) abort
+    let l:i = len('file://')
+    let l:encoded_path = a:uri[: l:i - 1] is# 'file://' ? a:uri[l:i :] : a:uri
+
+    let l:path = go#uri#Decode(l:encoded_path)
+
+    " If the path is like /C:/foo/bar, it should be C:\foo\bar instead.
+    if go#util#IsWin() && l:path =~# '^/[a-zA-Z]:'
+        let l:path = substitute(l:path[1:], '/', '\\', 'g')
+    endif
+
+    return l:path
 endfunction
 
 " restore Vi compatibility settings

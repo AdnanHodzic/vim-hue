@@ -17,14 +17,14 @@ shift $((OPTIND - 1))
 
 if [ -z "${1:-}" ]; then
   echo "unknown version: '${1:-}'"
-  echo "First argument must be 'vim-7.4', 'vim-8.0', or 'nvim'."
+  echo "First argument must be 'vim-8.1', 'vim-8.2', or 'nvim'."
   exit 1
 fi
 
 dir="/tmp/vim-go-test/$1-install"
 export GOPATH=$dir
-export GO111MODULE=off
-export PATH=${GOPATH}/bin:$PATH
+export GO111MODULE=on
+export PATH="${GOPATH}/bin:$PATH"
 shift
 
 if [ ! -f "$dir/bin/vim" ]; then
@@ -34,13 +34,13 @@ fi
 
 if [ $coverage -eq 1 ]; then
   covimerage -q run --report-file /tmp/vim-go-test/cov-profile.txt --append \
-    $dir/bin/vim --noplugin -u NONE -N \
+    $dir/bin/vim --noplugin -u NONE -i NONE -N -n \
       +"set shm+=WAFI rtp^=$vimgodir packpath=$dir/share/vim/vimgo" \
       +'filetype plugin indent on' \
       +'packloadall!' \
       "$@"
 else
-  $dir/bin/vim --noplugin -u NONE -N \
+  $dir/bin/vim --noplugin -u NONE -i NONE -N -n \
     +"set shm+=WAFI rtp^=$vimgodir packpath=$dir/share/vim/vimgo" \
     +'filetype plugin indent on' \
     +'packloadall!' \

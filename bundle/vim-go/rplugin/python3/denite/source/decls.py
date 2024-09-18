@@ -26,6 +26,7 @@ DECLS_SYNTAX_HIGHLIGHT = [
      're': r'type ', 'conceal': True},
     ]
 
+
 class Source(Base):
 
     def __init__(self, vim):
@@ -65,7 +66,7 @@ class Source(Base):
             return []
 
         txt = cmd.stdout.decode('utf-8')
-        output = json.loads(txt, encoding='utf-8')
+        output = json.loads(txt)
 
         def make_candidates(row):
             name = self.vim.funcs.fnamemodify(row['filename'], ':~:.')

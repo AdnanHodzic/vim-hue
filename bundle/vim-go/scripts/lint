@@ -11,14 +11,14 @@ cd "$vimgodir"
 #####################################
 if [ -z "${1:-}" ]; then
   echo "unknown version: '${1:-}'"
-  echo "First argument must be 'vim-7.4', 'vim-8.0', or 'nvim'."
+  echo "First argument must be 'vim-8.1', 'vim-8.2' or 'nvim'."
 	exit 1
 fi
 
 vim=$1
 vimdir="/tmp/vim-go-test/$vim-install"
 export GOPATH=$vimdir
-export PATH=${GOPATH}/bin:$PATH
+export PATH="${GOPATH}/bin:$PATH"
 
 if [ ! -f "$vimdir/bin/vim" ]; then
 	echo "$vimdir/bin/vim doesn't exist; did you install it with the install-vim script?"
@@ -54,9 +54,9 @@ lint=$(sh "$vimdir/share/vim/vimgo/pack/vim-go/start/vim-vimlint/bin/vimlint.sh"
   -c func_abort=1 \
   -e EVL110=1 -e EVL103=1 -e EVL104=1 -e EVL102=1 \
   "$vimgodir" \
-  2>&1 ||:)
-if [ -n "$lint" ]; then
-  echo "FAILED"
+  2>&1)
+result="$?"
+if [ "$result" -eq "2" ]; then
   echo "$lint"
   echo
   failed=6

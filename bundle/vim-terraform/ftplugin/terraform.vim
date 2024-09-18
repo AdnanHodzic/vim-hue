@@ -1,69 +1,56 @@
 " terraform.vim - basic vim/terraform integration
 " Maintainer: HashiVim <https://github.com/hashivim>
 
-if exists("g:loaded_terraform") || v:version < 700 || &cp || !executable('terraform')
+if exists('b:did_ftplugin') || v:version < 700 || &compatible
   finish
 endif
-let g:loaded_terraform = 1
 
-if !exists("g:terraform_fmt_on_save")
-  let g:terraform_fmt_on_save = 0
+" Have only kept the terraform versions of these options for backwards
+" compatibility.
+if get(g:, 'terraform_fold_sections', 0)
+  let s:hcl_fold_sections_save = get(g:, 'hcl_fold_sections', 0)
+  let g:hcl_fold_sections=1
+end
+
+if get(g:, 'terraform_align', 0)
+  let s:hcl_align_save = get(g:, 'hcl_align', 0)
+  let g:hcl_align=1
+end
+
+runtime! ftplugin/hcl.vim
+
+if exists('s:hcl_align_save')
+  let g:hcl_align = s:hcl_align_save
+end
+if exists('s:hcl_fold_sections_save')
+  let g:hcl_fold_sections = s:hcl_fold_sections_save
+end
+
+if !exists('g:terraform_binary_path')
+  let g:terraform_binary_path='terraform'
 endif
 
-function! s:commands(A, L, P)
-  return join([
-  \ "apply",
-  \ "console",
-  \ "destroy",
-  \ "env",
-  \ "fmt",
-  \ "get",
-  \ "graph",
-  \ "import",
-  \ "init",
-  \ "output",
-  \ "plan",
-  \ "providers",
-  \ "push",
-  \ "refresh",
-  \ "show",
-  \ "taint",
-  \ "untaint",
-  \ "validate",
-  \ "version",
-  \ "workspace",
-  \ "debug",
-  \ "force-unlock",
-  \ "state"
-  \ ], "\n")
-endfunction
+if !executable(g:terraform_binary_path)
+  finish
+endif
 
-" Adapted from vim-hclfmt:
-" https://github.com/fatih/vim-hclfmt/blob/master/autoload/fmt.vim
-function! terraform#fmt()
-  let l:curw = winsaveview()
-  let l:tmpfile = tempname()
-  call writefile(getline(1, "$"), l:tmpfile)
-  let output = system("terraform fmt -write " . l:tmpfile)
-  if v:shell_error == 0
-    try | silent undojoin | catch | endtry
-    call rename(l:tmpfile, resolve(expand("%")))
-    silent edit!
-    let &syntax = &syntax
-  else
-    echo output
-    call delete(l:tmpfile)
-  endif
-  call winrestview(l:curw)
-endfunction
+let s:cpo_save = &cpoptions
+set cpoptions&vim
 
-augroup terraform
-  autocmd!
-  autocmd BufEnter *
-        \ command! -nargs=+ -complete=custom,s:commands Terraform execute '!terraform '.<q-args>. ' -no-color'
-  autocmd BufEnter * command! -nargs=0 TerraformFmt call terraform#fmt()
-  if get(g:, "terraform_fmt_on_save", 1)
+command! -nargs=+ -complete=custom,terraform#commands -buffer Terraform
+  \ execute '!'.g:terraform_binary_path.' '.<q-args>.' -no-color'
+
+command! -nargs=0 -buffer TerraformFmt call terraform#fmt()
+let b:undo_ftplugin .= '|delcommand Terraform|delcommand TerraformFmt'
+
+if get(g:, 'terraform_fmt_on_save', 0)
+  augroup vim.terraform.fmt
+    autocmd!
     autocmd BufWritePre *.tf call terraform#fmt()
     autocmd BufWritePre *.tfvars call terraform#fmt()
-  endif
-augroup END
+    autocmd BufWritePre *.tftest.hcl call terraform#fmt()
+  augroup END
+endif
+
+let &cpoptions = s:cpo_save
+unlet s:cpo_save

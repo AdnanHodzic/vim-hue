@@ -5,13 +5,11 @@ set cpo&vim
 let s:go_stack = []
 let s:go_stack_level = 0
 
-function! go#def#Jump(mode) abort
-  let fname = fnamemodify(expand("%"), ':p:gs?\\?/?')
+" go#def#Jump jumps to a definition. Valid modes are 'tab', 'split', 'vsplit',
+" and the empty string, ''.
+function! go#def#Jump(mode, type) abort
+  let l:fname = fnamemodify(expand("%"), ':p:gs?\\?/?')
 
-  " so guru right now is slow for some people. previously we were using
-  " godef which also has it's own quirks. But this issue come up so many
-  " times I've decided to support both. By default we still use guru as it
-  " covers all edge cases, but now anyone can switch to godef if they wish
   let bin_name = go#config#DefMode()
   if bin_name == 'godef'
     let l:cmd = ['godef',
@@ -22,51 +20,30 @@ function! go#def#Jump(mode) abort
     if &modified
       let l:stdin_content = join(go#util#GetLines(), "\n")
       call add(l:cmd, "-i")
-      let [l:out, l:err] = go#util#Exec(l:cmd, l:stdin_content)
+      let [l:out, l:err] = go#util#ExecInDir(l:cmd, l:stdin_content)
     else
-      let [l:out, l:err] = go#util#Exec(l:cmd)
+      let [l:out, l:err] = go#util#ExecInDir(l:cmd)
     endif
-  elseif bin_name == 'guru'
-    let cmd = [go#path#CheckBinPath(bin_name)]
-    let buildtags = go#config#BuildTags()
-    if buildtags isnot ''
-      let cmd += ['-tags', buildtags]
-    endif
-
-    let stdin_content = ""
-
-    if &modified
-      let content = join(go#util#GetLines(), "\n")
-      let stdin_content = fname . "\n" . strlen(content) . "\n" . content
-      call add(cmd, "-modified")
-    endif
-
-    call extend(cmd, ["definition", fname . ':#' . go#util#OffsetCursor()])
-
-    if go#util#has_job()
-      let l:state = {}
-      let l:spawn_args = {
-            \ 'cmd': cmd,
-            \ 'complete': function('s:jump_to_declaration_cb', [a:mode, bin_name], l:state),
-            \ 'for': '_',
-            \ 'statustype': 'searching declaration',
-            \ }
-
-      if &modified
-        let l:spawn_args.input = stdin_content
-      endif
-
-      call s:def_job(spawn_args, l:state)
+  elseif bin_name == 'gopls'
+    if !go#config#GoplsEnabled()
+      call go#util#EchoError("go_def_mode is 'gopls', but gopls is disabled")
       return
     endif
 
-    if &modified
-      let [l:out, l:err] = go#util#Exec(l:cmd, stdin_content)
+    " reset l:fname when using gopls so that the filename will be converted to
+    " a URI correctly on windows.
+    let l:fname = expand('%')
+    let [l:line, l:col] = go#lsp#lsp#Position()
+    " delegate to gopls, with an empty job object and an exit status of 0
+    " (they're irrelevant for gopls).
+    if a:type
+      call go#lsp#TypeDef(l:fname, l:line, l:col, function('s:jump_to_declaration_cb', [a:mode, 'gopls', {}, 0]))
     else
-      let [l:out, l:err] = go#util#Exec(l:cmd)
+      call go#lsp#Definition(l:fname, l:line, l:col, function('s:jump_to_declaration_cb', [a:mode, 'gopls', {}, 0]))
     endif
+    return
   else
-    call go#util#EchoError('go_def_mode value: '. bin_name .' is not valid. Valid values are: [godef, guru]')
+    call go#util#EchoError('go_def_mode value: '. bin_name .' is not valid. Valid values are: [godef, gopls]')
     return
   endif
 
@@ -84,17 +61,20 @@ function! s:jump_to_declaration_cb(mode, bin_name, job, exit_status, data) abort
   endif
 
   call go#def#jump_to_declaration(a:data[0], a:mode, a:bin_name)
-  call go#util#EchoSuccess(fnamemodify(a:data[0], ":t"))
 
-  " capture the active window so that after the exit_cb and close_cb callbacks
-  " can return to it when a:mode caused a split.
+  " capture the active window so that callbacks for jobs, exit_cb and
+  " close_cb, and callbacks for gopls can return to it when a:mode caused a
+  " split.
   let self.winid = win_getid(winnr())
 endfunction
 
+" go#def#jump_to_declaration parses out (expected to be
+" 'filename:line:col: message').
 function! go#def#jump_to_declaration(out, mode, bin_name) abort
   let final_out = a:out
   if a:bin_name == "godef"
-    " append the type information to the same line so our we can parse it.
+    " append the type information to the same line so it will be parsed
+    " correctly using guru's output format.
     " This makes it compatible with guru output.
     let final_out = join(split(a:out, '\n'), ':')
   endif
@@ -107,37 +87,44 @@ function! go#def#jump_to_declaration(out, mode, bin_name) abort
     let parts = split(out, ':')
   endif
 
-  let filename = parts[0]
-  let line = parts[1]
-  let col = parts[2]
-  let ident = parts[3]
-
-  " Remove anything newer than the current position, just like basic
-  " vim tag support
-  if s:go_stack_level == 0
-    let s:go_stack = []
-  else
-    let s:go_stack = s:go_stack[0:s:go_stack_level-1]
+  if len(parts) == 0
+    call go#util#EchoError('go jump_to_declaration '. a:bin_name .' output is not valid.')
+    return
   endif
 
-  " increment the stack counter
-  let s:go_stack_level += 1
+  let line = 1
+  let col = 1
+  let ident = 0
+  let filename = parts[0]
+  if len(parts) > 1
+    let line = parts[1]
+  endif
+  if len(parts) > 2
+    let col = parts[2]
+  endif
+  if len(parts) > 3
+    let ident = parts[3]
+  endif
 
-  " push it on to the jumpstack
-  let stack_entry = {'line': line("."), 'col': col("."), 'file': expand('%:p'), 'ident': ident}
-  call add(s:go_stack, stack_entry)
+  if exists('*settagstack') && has('patch-8.2.0077')
+    let l:tag = expand('<cword>')
+    let l:pos = [bufnr('')] + getcurpos()[1:]
+    let l:stack_entry = {'bufnr': l:pos[0], 'from': l:pos, 'tagname': l:tag}
+  else
+    let l:stack_entry = {'line': line("."), 'col': col("."), 'file': expand('%:p'), 'ident': ident}
+  endif
 
   " needed for restoring back user setting this is because there are two
   " modes of switchbuf which we need based on the split mode
   let old_switchbuf = &switchbuf
 
   normal! m'
-  if filename != fnamemodify(expand("%"), ':p:gs?\\?/?')
+  if a:mode != '' || filename != fnamemodify(expand("%"), ':p:gs?\\?/?')
     " jump to existing buffer if, 1. we have enabled it, 2. the buffer is loaded
     " and 3. there is buffer window number we switch to
-    if go#config#DefReuseBuffer() && bufloaded(filename) != 0 && bufwinnr(filename) != -1
-      " jumpt to existing buffer if it exists
-      execute bufwinnr(filename) . 'wincmd w'
+    if go#config#DefReuseBuffer() && bufwinnr(filename) != -1
+      " jump to existing buffer if it exists
+      call win_gotoid(bufwinid(filename))
     else
       if &modified
         let cmd = 'hide edit'
@@ -159,13 +146,40 @@ function! go#def#jump_to_declaration(out, mode, bin_name) abort
       endif
 
       " open the file and jump to line and column
-      exec cmd fnameescape(fnamemodify(filename, ':.'))
+      try
+        exec cmd fnameescape(fnamemodify(filename, ':.'))
+      catch
+        if stridx(v:exception, ':E325:') < 0
+          call go#util#EchoError(v:exception)
+        endif
+      endtry
     endif
   endif
   call cursor(line, col)
-
   " also align the line to middle of the view
   normal! zz
+
+  if exists('*settagstack') && has('patch-8.2.0077')
+    " Jump was successful, write previous location to tag stack.
+    let l:winid = win_getid()
+    let l:stack = gettagstack(l:winid)
+    let l:stack['items'] = [l:stack_entry]
+    call settagstack(l:winid, l:stack, 't')
+  else
+    " Remove anything newer than the current position, just like basic
+    " vim tag support
+    if s:go_stack_level == 0
+      let s:go_stack = []
+    else
+      let s:go_stack = s:go_stack[0:s:go_stack_level-1]
+    endif
+
+    " increment the stack counter
+    let s:go_stack_level += 1
+
+    " push it on to the jumpstack
+    call add(s:go_stack, l:stack_entry)
+  endif
 
   let &switchbuf = old_switchbuf
 endfunction

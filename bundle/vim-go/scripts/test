@@ -14,19 +14,22 @@ _usage() {
   echo "  -h     Show this help"
   echo "  -v     Enable verbose output"
   echo "  -r     Run only the tests from this file"
-  echo "  -c     Generate and submit code coverage reports"
+  echo "  -c     Generate code coverage reports"
+  echo "  -u     Submit code coverage reports"
   echo
 }
 
 verbose=0
 run=""
 coverage=""
-while getopts "hvcr:" option; do
+uploadcoverage=""
+while getopts "hvcur:" option; do
   case "$option" in
       h) _usage; exit 0 ;;
       v) verbose=1; ;;
       r) run=$OPTARG ;;
       c) coverage="-c" ;;
+      u) uploadcoverage=1 ;;
       *)
         echo "error: unknown option '$option'"
         _usage
@@ -40,14 +43,14 @@ shift $((OPTIND - 1))
 #####################################
 if [ -z "${1:-}" ]; then
   echo "unknown version: '${1:-}'"
-  echo "First argument must be 'vim-7.4', 'vim-8.0', or 'nvim'."
+  echo "First argument must be 'vim-8.1', 'vim-8.2', or 'nvim'."
   exit 1
 fi
 
 vim=$1
 vimdir="/tmp/vim-go-test/$vim-install"
 export GOPATH=$vimdir
-export PATH=${GOPATH}/bin:$PATH
+export PATH="${GOPATH}/bin:$PATH"
 
 if [ ! -f "$vimdir/bin/vim" ]; then
   echo "$vimdir/bin/vim doesn't exist; did you install it with the install-vim script?"
@@ -63,12 +66,13 @@ fi
 [ -f '/tmp/vim-go-test/cov-report.txt' ]  && rm '/tmp/vim-go-test/cov-report.txt'
 
 # Run the actual tests.
-find "$vimgodir" -name '*_test.vim' | while read test_file; do
+find "$vimgodir" -name '*_test.vim' | sort | while read test_file; do
   [ -n "$run" -a "$(basename "$test_file")" != "$run" ] && continue
 
   "$vimgodir/scripts/run-vim" $coverage $vim -e \
     +"silent e $test_file" \
     +"let g:test_verbose=$verbose" \
+    +"let g:go_echo_command_info=0" \
     -S ./scripts/runtest.vim < /dev/null || (
       # If Vim exits with non-0 it's almost certainly a bug in the test runner;
       # should very rarely happen in normal usage.
@@ -90,12 +94,15 @@ if [ -f "/tmp/vim-go-test/FAILED" ]; then
 fi
 echo 2>&1 "All ($vim) tests PASSED"
 
-# Submit coverage reports
+# Generate coverage reports
 if [ -n "$coverage" ]; then
   coverage xml --omit '*_test.vim'
-  codecov -X search gcov pycov -f coverage.xml --required \
+
+  if [ -n "$uploadcoverage" ]; then
+    codecov -X search gcov pycov -f coverage.xml --required \
     --flags "$(echo "$vim" | sed -s 's/[-.]//g')"
-  rm coverage.xml
+    rm coverage.xml
+  fi
 fi
 
 # vim:ts=2:sts=2:sw=2:et
