@@ -30,6 +30,12 @@ All requirements can be installed by running:
 
 `sudo apt install vim python3 python3-pip python3-distutils python3-click -y`
 
+Or by using pipenv:
+
+```
+pipenv install
+```
+
 That's it, you're ready to [run vim-hue installer](https://github.com/AdnanHodzic/vim-hue#vim-hue---installer)!
 
 ##### Requirements installation for MacOS
@@ -52,6 +58,12 @@ brew install python3 vim
 
 ```
 pip3 install click
+```
+
+Or by using pipenv:
+
+```
+pipenv install
 ```
 
 Now you're ready to [run vim-hue installer](https://github.com/AdnanHodzic/vim-hue#vim-hue---installer)!
