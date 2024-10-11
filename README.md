@@ -28,7 +28,7 @@ It features "vim-hue" dark Vim colorscheme and complete Vim configuration. Ideal
 
 All requirements can be installed by running:
 
-`sudo apt install vim python3 python3-pip python3-distutils python3-click -y`
+`sudo apt install vim python3 python3-pip python3-setuptools python3-click -y`
 
 Or by using pipenv:
 
