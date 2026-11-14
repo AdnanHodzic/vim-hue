@@ -6,7 +6,7 @@ scriptencoding utf-8
 
 if !exists('s:state')
   let s:state = {
-        \ 'rpcid': 1,
+        \ 'rpcid': 0,
         \ 'running': 0,
         \ 'currentThread': {},
         \ 'localVars': {},
@@ -64,26 +64,54 @@ function! s:complete(job, exit_status, data) abort
   call s:clearState()
 endfunction
 
-function! s:logger(prefix, ch, msg) abort
-  let l:cur_win = bufwinnr('')
-  let l:log_win = bufwinnr(bufnr('__GODEBUG_OUTPUT__'))
-  if l:log_win == -1
-    return
-  endif
-  exe l:log_win 'wincmd w'
-
+let s:log = []
+let s:logtimer = 0
+function! s:logasync(timer) abort
+  let s:logtimer = 0
   try
-    setlocal modifiable
-    if getline(1) == ''
-      call setline('$', a:prefix . a:msg)
-    else
-      call append('$', a:prefix . a:msg)
+    let l:name = '__GODEBUG_OUTPUT__'
+    let l:log_winid = bufwinid(l:name)
+    if l:log_winid == -1
+      if !s:isReady() && !has_key(s:state, 'job')
+        return
+      endif
+      let s:logtimer = timer_start(go#config#DebugLogDelay(), function('s:logasync', []))
+      return
     endif
-    normal! G
-    setlocal nomodifiable
+
+    try
+      call setbufvar(l:name, '&modifiable', 1)
+      for [l:prefix, l:data] in s:log
+        call remove(s:log, 0)
+        if getbufline(l:name, 1)[0] == ''
+          call setbufline(l:name, '$', printf('%s%s', l:prefix, l:data))
+        else
+          call appendbufline(l:name, '$', printf('%s%s', l:prefix, l:data))
+        endif
+      endfor
+
+      " Move the window's cursor position without switching to the window
+      call win_execute(l:log_winid, 'normal! G')
+      call setbufvar(l:name, '&modifiable', 0)
+    finally
+    endtry
+  catch
+    call go#util#EchoError(printf('at %s: %s', v:throwpoint, v:exception))
   finally
-    exe l:cur_win 'wincmd w'
+    " retry when there's an exception.
+    if len(s:log) != 0
+      let s:logtimer = timer_start(go#config#DebugLogDelay(), function('s:logasync', []))
+    endif
   endtry
+endfunction
+
+function! s:logger(prefix, ch, data) abort
+  let l:shouldStart = s:logtimer is 0
+  let s:log = add(s:log, [a:prefix, a:data])
+
+  if l:shouldStart
+    let s:logtimer = timer_start(go#config#DebugLogDelay(), function('s:logasync', []))
+  endif
 endfunction
 
 " s:call_jsonrpc will call method, passing all of s:call_jsonrpc's optional
@@ -295,7 +323,13 @@ endfunction
 function! go#debug#Stop() abort
   " Remove all commands and add back the default commands.
   for k in map(split(execute('command GoDebug'), "\n")[1:], 'matchstr(v:val, "^\\s*\\zs\\S\\+")')
-    exe 'delcommand' k
+    try
+      if k is 'Name'
+        continue
+      endif
+      execute(printf('delcommand %s', k))
+    catch
+    endtry
   endfor
   command! -nargs=* -complete=customlist,go#package#Complete GoDebugStart call go#debug#Start('debug', <f-args>)
   command! -nargs=* -complete=customlist,go#package#Complete GoDebugTest  call go#debug#Start('test', <f-args>)
@@ -309,7 +343,10 @@ function! go#debug#Stop() abort
 
   " remove plug mappings
   for k in map(split(execute('nmap <Plug>(go-debug-'), "\n"), 'matchstr(v:val, "^n\\s\\+\\zs\\S\\+")')
-    execute(printf('nunmap %s', k))
+    try
+      execute(printf('nunmap %s', k))
+    catch
+    endtry
   endfor
 
   call s:stop()
@@ -650,9 +687,18 @@ endfunction
 function! s:sync_breakpoints()
   try
     " get the breakpoints
-    let l:promise = go#promise#New(function('s:rpc_response'), 20000, {})
-    call s:call_jsonrpc(l:promise.wrapper, 'RPCServer.ListBreakpoints', {'All': v:true})
-    let l:res = l:promise.await()
+    call s:call_jsonrpc(function('s:handle_list_breakpoints'), 'RPCServer.ListBreakpoints', {'All': v:true})
+  catch
+    call go#util#EchoError(printf('failed to sync breakpoints (%s): %s', v:throwpoint, v:exception))
+  finally
+  endtry
+endfunction
+
+function! s:handle_list_breakpoints(check_errors, res)
+  try
+    call a:check_errors()
+
+    let l:res = a:res
     if type(l:res) != v:t_dict || !has_key(l:res, 'result') || type(l:res.result) != v:t_dict || !has_key(l:res.result, 'Breakpoints')
       call go#util#EchoError('could not list breakpoints')
     endif
@@ -664,7 +710,6 @@ function! s:sync_breakpoints()
     let l:signsByBreakpointID = {}
     " the signs with a breakpoint
     let l:breakpointsBySignID = {}
-
 
     " replace the sign when the id of the breakpoint and the sign are
     " different
@@ -702,7 +747,7 @@ function! s:sync_breakpoints()
       if empty(get(l:breakpointsBySignID, l:sign.id, ''))
         let l:promise = go#promise#New(function('s:rpc_response'), 20000, {})
         call s:call_jsonrpc(l:promise.wrapper, 'RPCServer.CreateBreakpoint', {'Breakpoint': {'file': s:substituteLocalPath(l:sign.file), 'line': l:sign.line}})
-        let l:res = l:promise.await()
+        "let l:res = l:promise.await()
       endif
     endfor
   catch
@@ -771,7 +816,6 @@ function! s:message(buf, data) abort
     " and
     "     for every list you receive in a callback, all items except the first
     "     represent newlines.
-
     let l:data = printf('%s%s', a:buf, a:data[0])
     for l:msg in a:data[1:]
       let l:data = printf("%s\n%s", l:data, l:msg)
@@ -995,8 +1039,9 @@ function! s:eval_tree(var, nest, isMapOrSliceChild) abort
       endif
 
     elseif kind == 'String'
+      " Value can end up being of type Blob. Handle in s:printf_string_value.
       let v .= printf("%s[%d]%s", a:var.type, a:var.len,
-            \ len(a:var.value) > 0 ? ': ' . a:var.value : '')
+            \ len(a:var.value) > 0 ? ': ' . s:printf_string_value(a:var.value) : '')
 
     elseif kind == 'Slice' || kind == 'String' || kind == 'Map' || kind == 'Array'
       let v .= printf("%s[%d]", a:var.type, a:var.len)
@@ -1043,6 +1088,24 @@ function! s:eval_tree(var, nest, isMapOrSliceChild) abort
     endfor
   endif
   return v
+endfunction
+
+function! s:printf_string_value(value) abort
+  if type(a:value) != v:t_blob
+    return printf("%s", a:value)
+  endif
+  let l:specials = ['\a', '\b', '\t', '\n', '\v', '\f', '\r']
+  let l:str = ''
+  for b in a:value
+    if 7 <= b && b <= 13
+      let l:str .= specials[b-7]
+    elseif 32 <= b && b <= 126
+      let l:str .= printf("%c", b)
+    else
+      let l:str .= '\x'.printf("%.2x", b)
+    endif
+  endfor
+  return l:str
 endfunction
 
 function! s:eval(arg) abort
@@ -1461,7 +1524,7 @@ function! go#debug#Restart() abort
     call s:stop()
 
     let s:state = {
-          \ 'rpcid': 1,
+          \ 'rpcid': 0,
           \ 'running': 0,
           \ 'currentThread': {},
           \ 'localVars': {},

@@ -1,6 +1,38 @@
 ## unplanned
 
 BACKWARDS INCOMPATIBILITIES:
+* Update golangci-lint support to expect golangci-lint/v2.
+  [[GH-3710]](https://github.com/fatih/vim-go/pull/3710)
+
+IMPROVEMENTS:
+* Improving handling of strings from delve that Neovim marshals to a Blob
+  value.
+  [[GH-3744]](https://github.com/fatih/vim-go/pull/3744)
+* Handle Go 1.27's support for providing a default value for `go env GOBIN`
+  when GOBIN is otherwise undefined.
+  [[GH-3753]](https://github.com/fatih/vim-go/pull/3753)
+
+BUG FIXES:
+* Fix delay when listing breakpoints when stepping in Neovim.
+  [[GH-3714]](https://github.com/fatih/vim-go/pull/3714)
+* Fix :GoReportGitHubIssue after GitHub changed template URL behaviors.
+  [[GH-3736]](https://github.com/fatih/vim-go/pull/3736)
+* Add support for GNUMakefile to compiler settings.
+  [[GH-3723]](https://github.com/fatih/vim-go/pull/3723)
+* Bring back go-callers mappings, its documentation, and :GoCallers
+  documentation.
+  [[GH-3741]](https://github.com/fatih/vim-go/pull/3741)
+* Fix highlighting of multi-line string concatenation in a var or const block.
+  [[GH-3750]](https://github.com/fatih/vim-go/pull/3750)
+  [[GH-3751]](https://github.com/fatih/vim-go/pull/3751)
+* Fix :GoDefPop, :GoDefStack, and :GoDefStackClear when Vim's native tag stack
+  is used.
+  [[GH-3754]](https://github.com/fatih/vim-go/pull/3754)
+
+
+## v1.29 - (April 18, 2025)
+
+BACKWARDS INCOMPATIBILITIES:
 * Drop support for [guru](https://docs.google.com/document/d/1_Y9xCEMj5S-7rv2ooHpZNH15JgRT5iM742gJkw5LtmQ/edit?pli=1&tab=t.0#heading=h.ojv16z1d1gas).
   [[GH-3650]](https://github.com/fatih/vim-go/pull/3650)
   [[GH-3654]](https://github.com/fatih/vim-go/pull/3654)
@@ -57,6 +89,15 @@ IMPROVEMENTS:
   [[GH-3633]](https://github.com/fatih/vim-go/pull/3633)
 * Add fuzz snippet.
   [[GH-3636]](https://github.com/fatih/vim-go/pull/3636)
+* Update gopls code action handling.
+  [[GH-3695]](https://github.com/fatih/vim-go/pull/3695)
+* Remove installation of `gorename`.
+  [[GH-3697]](https://github.com/fatih/vim-go/pull/3697)
+* Add support for `gopls rename`.
+  [[GH-3698]](https://github.com/fatih/vim-go/pull/3698)
+* Use a double border around doc popup.
+  [[GH-3705]](https://github.com/fatih/vim-go/pull/3705)
+
 
 BUG FIXES:
 * Update [impl](https://github.com/josharian/impl) source path after its default branch was changed from master to main.
@@ -93,6 +134,8 @@ BUG FIXES:
   [[GH-3675]](https://github.com/fatih/vim-go/pull/3675)
 * Fix handling of gopls restarts.
   [[GH-3685]](https://github.com/fatih/vim-go/pull/3685)
+* Fix :GoDocBrowser's handling of arguments.
+  [[GH-3703]](https://github.com/fatih/vim-go/pull/3703)
 
 ## v1.28 - (December 17, 2022)
 

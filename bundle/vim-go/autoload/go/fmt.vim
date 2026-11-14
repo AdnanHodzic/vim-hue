@@ -137,7 +137,7 @@ function! go#fmt#update_file(source, target)
   " reload buffer to reflect latest changes
   silent edit!
 
-  call go#lsp#DidChange(expand(a:target, ':p'))
+  call go#lsp#DidChange(fnamemodify(a:target, ':p'))
 
   let &fileformat = old_fileformat
   let &syntax = &syntax

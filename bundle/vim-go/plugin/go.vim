@@ -14,17 +14,17 @@ function! s:checkVersion() abort
     if has('nvim')
       let l:unsupported = !has('nvim-0.4.0')
     else
-      let l:unsupported = !has('patch-8.1.2269')
+      let l:unsupported = !has('patch-8.2.5072')
     endif
 
     if l:unsupported == 1
       echohl Error
-      echom "vim-go requires at least Vim 8.1.2269 or Neovim 0.4.0, but you're using an older version."
+      echom "vim-go requires at least Vim 8.2.5072 or Neovim 0.4.0, but you're using an older version."
       echom "Please update your Vim for the best vim-go experience."
       echom "If you really want to continue you can set this to make the error go away:"
       echom "    let g:go_version_warning = 0"
       echom "Note that some features may error out or behave incorrectly."
-      echom "Please do not report bugs unless you're using at least Vim 8.1.2269 or Neovim 0.4.0."
+      echom "Please do not report bugs unless you're using at least Vim 8.2.5072 or Neovim 0.4.0."
       echohl None
 
       " Make sure people see this.
@@ -48,10 +48,9 @@ let s:packages = {
       \ 'goimports':     ['golang.org/x/tools/cmd/goimports@master'],
       \ 'revive':        ['github.com/mgechev/revive@latest'],
       \ 'gopls':         ['golang.org/x/tools/gopls@latest', {}, {'after': function('go#lsp#Restart', [])}],
-      \ 'golangci-lint': ['github.com/golangci/golangci-lint/cmd/golangci-lint@latest'],
+      \ 'golangci-lint': ['github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest'],
       \ 'staticcheck':   ['honnef.co/go/tools/cmd/staticcheck@latest'],
       \ 'gomodifytags':  ['github.com/fatih/gomodifytags@latest'],
-      \ 'gorename':      ['golang.org/x/tools/cmd/gorename@master'],
       \ 'gotags':        ['github.com/jstemmer/gotags@master'],
       \ 'impl':          ['github.com/josharian/impl@main'],
       \ 'motion':        ['github.com/fatih/motion@latest'],

@@ -325,18 +325,18 @@ function! go#cmd#Generate(bang, ...) abort
   let errors = go#list#Get(l:listtype)
   call go#list#Window(l:listtype, len(errors))
   if !empty(errors)
-    let l:status.status = 'failed'
+    let l:status.state = 'failed'
     if !a:bang
       call go#list#JumpToFirst(l:listtype)
     endif
   else
-    let l:status.status = 'success'
+    let l:status.state = 'success'
     if go#config#EchoCommandInfo()
       redraws!
       call go#util#EchoSuccess('[generate] SUCCESS')
     endif
   endif
-  call go#statusline#Update(expand(':%:p:h'), l:status)
+  call go#statusline#Update(expand('%:p:h'), l:status)
 endfunction
 
 function! s:runerrorformat()
@@ -355,7 +355,7 @@ function! s:expandRunArgs(idx, val) abort
     return l:val
   endif
 
-  return fnamemodify(l:val, ':p')")
+  return fnamemodify(l:val, ':p')
 endfunction
 " ---------------------
 " | Vim job callbacks |

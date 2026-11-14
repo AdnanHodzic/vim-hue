@@ -38,6 +38,7 @@ nnoremap <silent> <Plug>(go-imports) :<C-u>call go#fmt#Format(1)<CR>
 nnoremap <silent> <Plug>(go-fmt) :<C-u>call go#fmt#Format(0)<CR>
 
 nnoremap <silent> <Plug>(go-implements) :<C-u>call go#implements#Implements(-1)<CR>
+nnoremap <silent> <Plug>(go-callers) :<C-u>call go#calls#Callers()<CR>
 nnoremap <silent> <Plug>(go-referrers) :<C-u>call go#referrers#Referrers(-1)<CR>
 nnoremap <silent> <Plug>(go-sameids) :<C-u>call go#sameids#SameIds(1)<CR>
 nnoremap <silent> <Plug>(go-sameids-toggle) :<C-u>call go#sameids#ToggleSameIds()<CR>

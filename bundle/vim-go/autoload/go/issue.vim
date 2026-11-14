@@ -2,11 +2,11 @@
 let s:cpo_save = &cpo
 set cpo&vim
 
-let s:templatepath = go#util#Join(resolve(expand('<sfile>:p:h:h:h')), '.github', 'ISSUE_TEMPLATE.md')
+let s:templatepath = go#util#Join(resolve(expand('<sfile>:p:h:h:h')), '.github', 'issue_template.md')
 
 function! go#issue#New() abort
   let body = go#uri#Encode(s:issuebody())
-  let url = "https://github.com/fatih/vim-go/issues/new?body=" . l:body
+  let url = "https://github.com/fatih/vim-go/issues/new?template=default.md&body=" . l:body
   call go#util#OpenBrowser(l:url)
 endfunction
 

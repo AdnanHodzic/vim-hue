@@ -65,7 +65,7 @@ function! go#term#newmode(bang, cmd, errorformat, mode) abort
     " horizontal split.
     if l:mode =~ "vertical" || l:mode =~ "vsplit" || l:mode =~ "vnew"
       exe 'vertical resize ' . l:width
-    elseif mode =~ "split" || mode =~ "new"
+    elseif l:mode =~ "split" || l:mode =~ "new"
       exe 'resize ' . l:height
     endif
     " we also need to resize the pty, so there you go...
@@ -102,7 +102,7 @@ function! go#term#newmode(bang, cmd, errorformat, mode) abort
     " horizontal split.
     if l:mode =~ "vertical" || l:mode =~ "vsplit" || l:mode =~ "vnew"
       exe 'vertical resize ' . l:width
-    elseif mode =~ "split" || mode =~ "new"
+    elseif l:mode =~ "split" || l:mode =~ "new"
       exe 'resize ' . l:height
     endif
     "if exists(*term_setsize)
@@ -246,7 +246,7 @@ function! s:closeterm()
 
     let l:info = l:info[0]
 
-    if !get(l:info, 'terminal', 0) is 1
+    if get(l:info, 'terminal', 0) isnot 1
       return
     endif
 

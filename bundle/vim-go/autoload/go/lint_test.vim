@@ -54,7 +54,10 @@ func! s:gometa(metalinter) abort
 
     call gotest#assert_quickfix(actual, expected)
   finally
-      call call(RestoreGOPATH, [])
+    if a:metalinter == 'golangci-lint'
+      call go#util#Exec(['golangci-lint', 'cache', 'clean'])
+    endif
+    call call(RestoreGOPATH, [])
   endtry
 endfunc
 
@@ -173,6 +176,9 @@ func! s:gometaautosave(metalinter, withList) abort
 
     call gotest#assert_quickfix(l:actual, l:expected)
   finally
+    if a:metalinter == 'golangci-lint'
+      call go#util#Exec(['golangci-lint', 'cache', 'clean'])
+    endif
     call go#util#Chdir(l:wd)
     call delete(l:tmp, 'rf')
   endtry
@@ -367,14 +373,14 @@ func! Test_Vet() abort
 
   try
     let expected = [
-          \ {'lnum': 7, 'bufnr': bufnr('%'), 'col': 2, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'fmt.Printf format %d has arg str of wrong type string'}
+          \ {'lnum': 7, 'bufnr': bufnr('%'), 'col': 14, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'fmt.Printf format %d has arg str of wrong type string'}
         \ ]
 
     let [l:goversion, l:err] = go#util#Exec(['go', 'env', 'GOVERSION'])
     let l:goversion = split(l:goversion, "\n")[0]
-    if l:goversion < 'go1.18'
+    if l:goversion < 'go1.25'
       let expected = [
-            \ {'lnum': 7, 'bufnr': bufnr('%'), 'col': 2, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'Printf format %d has arg str of wrong type string'}
+          \ {'lnum': 7, 'bufnr': bufnr('%'), 'col': 2, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'fmt.Printf format %d has arg str of wrong type string'}
           \ ]
     endif
 
@@ -411,14 +417,14 @@ func! Test_Vet_subdir() abort
 
   try
     let expected = [
-          \ {'lnum': 7, 'bufnr': bufnr('%'), 'col': 2, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'fmt.Printf format %d has arg str of wrong type string'}
+          \ {'lnum': 7, 'bufnr': bufnr('%'), 'col': 14, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'fmt.Printf format %d has arg str of wrong type string'}
         \ ]
 
     let [l:goversion, l:err] = go#util#Exec(['go', 'env', 'GOVERSION'])
     let l:goversion = split(l:goversion, "\n")[0]
-    if l:goversion < 'go1.18'
+    if l:goversion < 'go1.25'
       let expected = [
-            \ {'lnum': 7, 'bufnr': bufnr('%'), 'col': 2, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'Printf format %d has arg str of wrong type string'}
+            \ {'lnum': 7, 'bufnr': bufnr('%'), 'col': 2, 'valid': 1, 'vcol': 0, 'nr': -1, 'type': '', 'pattern': '', 'text': 'fmt.Printf format %d has arg str of wrong type string'}
           \ ]
     endif
 
@@ -512,29 +518,30 @@ func! Test_Lint() abort
   call s:testLint()
 endfunc
 
-"func! Test_Lint_GOPATH() abort
-"  let g:go_gopls_enabled = 0
-"  let RestoreGO111MODULE = go#util#SetEnv('GO111MODULE', 'off')
-"  let RestoreGOPATH = go#util#SetEnv('GOPATH', fnameescape(fnamemodify(getcwd(), ':p')) . 'test-fixtures/lint')
-"
-"  call s:testLint()
-"
-"  call call(RestoreGOPATH, [])
-"  call call(RestoreGO111MODULE, [])
-"endfunc
+func! Test_Lint_GOPATH() abort
+  let g:go_gopls_enabled = 0
+  let RestoreGO111MODULE = go#util#SetEnv('GO111MODULE', 'off')
+  let RestoreGOPATH = go#util#SetEnv('GOPATH', fnameescape(fnamemodify(getcwd(), ':p')) . 'test-fixtures/lint')
 
-"func! Test_Lint_NullModule() abort
-"  let g:go_gopls_enabled = 0
-"  let RestoreGO111MODULE = go#util#SetEnv('GO111MODULE', 'off')
-"
-"  call s:testLint()
-"
-"  call call(RestoreGO111MODULE, [])
-"endfunc
+  call s:testLint()
+
+  call call(RestoreGOPATH, [])
+  call call(RestoreGO111MODULE, [])
+endfunc
+
+func! Test_Lint_NullModule() abort
+  let g:go_gopls_enabled = 0
+  let RestoreGO111MODULE = go#util#SetEnv('GO111MODULE', 'off')
+
+  call s:testLint()
+
+  call call(RestoreGO111MODULE, [])
+endfunc
 
 func! Test_Errcheck() abort
   let g:go_gopls_enabled = 0
   let RestoreGOPATH = go#util#SetEnv('GOPATH', fnamemodify(getcwd(), ':p') . 'test-fixtures/lint')
+  let RestoreGOFLAGS = go#util#SetEnv('GOFLAGS', "-buildvcs=false")
   silent exe 'e! ' . $GOPATH . '/src/errcheck/errcheck.go'
 
   try
@@ -552,6 +559,7 @@ func! Test_Errcheck() abort
     call gotest#assert_quickfix(getqflist(), expected)
     call assert_equal(l:bufnr, bufnr(''))
   finally
+    call call(RestoreGOFLAGS, [])
     call call(RestoreGOPATH, [])
   endtry
 endfunc
@@ -602,11 +610,11 @@ func! Test_Errcheck_compilererror() abort
 endfunc
 
 func! s:vimdir()
-  let l:vim = "vim-8.2"
+  let l:vim = "vim-9.1"
   if has('nvim')
     let l:vim = 'nvim'
-  elseif v:version == 810
-    let l:vim = 'vim-8.1'
+  elseif v:version == 820
+    let l:vim = 'vim-8.2'
   endif
 
   return l:vim

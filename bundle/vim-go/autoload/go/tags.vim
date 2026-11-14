@@ -69,13 +69,13 @@ endfunc
 
 " write_out writes back the given output to the current buffer
 func s:write_out(out) abort
-  " not a json output
-  if a:out[0] !=# '{'
+  " nothing to do
+  if empty(a:out) || type(a:out) != type("")
     return
   endif
 
-  " nothing to do
-  if empty(a:out) || type(a:out) != type("")
+  " not a json output
+  if a:out[0] !=# '{'
     return
   endif
 

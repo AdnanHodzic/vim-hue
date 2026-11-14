@@ -7,6 +7,7 @@ function! go#implements#Implements(selected) abort
   if l:mode == 'gopls'
     if !go#config#GoplsEnabled()
       call go#util#EchoError("go_implements_mode is 'gopls', but gopls is disabled")
+      return
     endif
     let [l:line, l:col] = getpos('.')[1:2]
     let [l:line, l:col] = go#lsp#lsp#Position(l:line, l:col)
