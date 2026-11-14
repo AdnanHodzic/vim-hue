@@ -1,5 +1,5 @@
 # vim-hue
-vim-hue is colorful Vim config for all your SRE, Dev, DevOps & Cloud needs.
+vim-hue is a colorful Vim config for all your SRE, Dev, DevOps & Cloud needs.
 
 It features "vim-hue" dark Vim colorscheme and complete Vim configuration. Ideal for anyone using Vim and any of the following on daily basis:
 
@@ -76,6 +76,8 @@ vim-hue can be installed by simply running the installer and following on screen
 python3 vim-hue.py
 ```
 
+*Please note:* before running `--install`, feel free to review and customize settings in [vimrc](https://github.com/AdnanHodzic/vim-hue/blob/master/vimrc) to your own liking (you can also tweak `vimrc` later and re-run `--install` to apply your changes).
+
 ### Technical rationale
 
 Goal of `vim-hue` is to being "vanilla" Vim as much as possible, yet to include all necessary functionality. As such it consits of:
@@ -84,6 +86,7 @@ Goal of `vim-hue` is to being "vanilla" Vim as much as possible, yet to include 
 * Dark ["vim-hue" color scheme](https://github.com/AdnanHodzic/vim-hue/blob/master/colors/hue.vim)
 * [pathogen](https://github.com/AdnanHodzic/vim-hue/blob/master/pathogen.vim) for easy of plugin and runtime installation. 
 * [golang](https://github.com/AdnanHodzic/vim-hue/tree/master/bundle/vim-go) plugin.
+* [python](https://github.com/AdnanHodzic/vim-hue/tree/master/bundle/python-mode) plugin.
 * [terraform](https://github.com/AdnanHodzic/vim-hue/tree/master/bundle/vim-terraform) plugin.
 * [git-branch-info](https://github.com/AdnanHodzic/vim-hue/blob/master/plugin/git-branch-info.vim) plugin.
 

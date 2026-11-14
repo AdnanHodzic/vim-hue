@@ -1,0 +1,42 @@
+source /root/.vimrc.before
+source /root/.pymoderc
+
+" redir! >> "${VIM_OUTPUT_FILE}"
+"set backspace=indent,eol,start
+"set expandtab
+"set mouse=                    " disable mouse
+"set shiftround                " always round indentation to shiftwidth
+"set shiftwidth=4              " default to two spaces
+"set smartindent               " smart indenting
+"set softtabstop=4             " default to two spaces
+"set tabstop=4                 " default to two spaces
+"set term=xterm-256color
+"set wrap                      " visually wrap lines
+call has('python3')
+filetype plugin indent on
+let g:pymode_debug = 1
+set backupdir=
+set cmdheight=10
+set directory=
+set ft=python
+set nocompatible
+set nomore
+set noswapfile
+set packpath+=/tmp
+set paste
+" Do not clobber runtimepath here; it will be configured by the test runner
+set rtp+=/root/.vim/pack/vader/start/vader.vim
+set rtp+=/root/.vim/pack/foo/start/python-mode
+"set runtimepath+="$(dirname "${PWD}")"
+"set runtimepath=
+set shell=bash
+set shortmess=at
+set undodir=
+" VIM_OUTPUT_FILE may not be set; guard its use
+if exists('g:VIM_OUTPUT_FILE')
+  execute 'set verbosefile=' . g:VIM_OUTPUT_FILE
+endif
+set viewdir=
+syntax on
+
+source /root/.vimrc.after

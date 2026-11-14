@@ -1,0 +1,1010 @@
+*pymode.txt*     For Vim Version 8.0      Last change: 2019 March 08
+
+     ____  _  _  ____  _   _  _____  _  _     __  __  _____  ____  ____      ~
+    (  _ \( \/ )(_  _)( )_( )(  _  )( \( )___(  \/  )(  _  )(  _ \( ___)     ~
+     )___/ \  /   )(   ) _ (  )(_)(  )  ((___))    (  )(_)(  )(_) ))__)      ~
+    (__)   (__)  (__) (_) (_)(_____)(_)\_)   (_/\/\_)(_____)(____/(____)     ~
+
+
+                          Version: 0.14.0
+
+===============================================================================
+CONTENTS                                                        *pymode-contents*
+
+1. Intro...........................................................|pymode-intro|
+2. Common functionality...........................................|pymode-common|
+    2.1 Python version....................................|pymode-python-version|
+    2.2 Python indentation........................................|pymode-indent|
+    2.3 Python folding...........................................|pymode-folding|
+    2.4 Vim motion................................................|pymode-motion|
+    2.5 Show documentation.................................|pymode-documentation|
+    2.6 Support virtualenv....................................|pymode-virtualenv|
+    2.7 Run code.....................................................|pymode-run|
+    2.8 Breakpoints..........................................|pymode-breakpoints|
+3. Code checking....................................................|pymode-lint|
+    3.1 Ruff-specific configuration...................|pymode-ruff-configuration|
+    3.2 Legacy code checker options (mapped to Ruff)..|pymode-lint-options|
+4. Rope support.....................................................|pymode-rope|
+    4.1 Code completion.......................................|pymode-completion|
+    4.2 Find definition......................................|pymode-rope-findit|
+    4.3 Refactoring.....................................|pymode-rope-refactoring|
+    4.4 Undo/Redo changes......................................|pymode-rope-undo|
+5. Syntax.........................................................|pymode-syntax|
+6. FAQ...............................................................|pymode-faq|
+7. Development...............................................|pymode-development|
+8. Credits.......................................................|pymode-credits|
+9. License.......................................................|pymode-license|
+
+===============================================================================
+1. Intro ~
+                                                                   *pymode-intro*
+
+XXX IMPORTANT: As of 2017-11-18 python-mode is going through a major redesign.
+Thus some of its functionality may not work as expected. Please be patient and
+do report bugs or inconsistencies in its documentation. But remember to look
+for already openned bug reports for the same issue before creating a new one.
+
+Python-mode is a vim plugin that allows you to use Ruff (a fast Python linter
+and formatter), rope (for refactoring and code completion), and other libraries
+in vim to provide features like python code bug checking, formatting,
+refactoring, and some other useful things.
+
+This plugin allows you to create python code in vim very easily. You need to
+install Ruff on your system (via `pip install ruff`), but rope and other
+dependencies are included as submodules.
+
+Python-mode contains all you need to develop python applications in Vim.
+
+Features:                                                       *pymode-features*
+
+- Support Python version 3.10.13, 3.11.9, 3.12.4, 3.13.0
+- Syntax highlighting
+- Virtualenv support
+- Run python code (``<leader>r``)
+- Add/remove breakpoints (``<leader>b``)
+- Improved Python indentation
+- Python folding
+- Python motions and operators (``]]``, ``3[[``, ``]]M``, ``vaC``, ``viM``,
+  ``daC``, ``ciM``, ...)
+- Code checking using Ruff (fast Python linter) (``:PymodeLint``)
+- Auto-format code using Ruff (``:PymodeLintAuto``)
+- Search in python documentation (``K``)
+- Code refactoring <rope refactoring library> (rope_)
+- Strong code completion (rope_)
+- Go to definition (``<C-c>g`` for `:RopeGotoDefinition`)
+- And more, more ...
+
+
+===============================================================================
+2. Common functionality ~
+                                                                  *pymode-common*
+
+This script provides the following options that can customizes the behavior of
+python-mode. These options should be set in your |vimrc|.
+
+Find below the default values:
+
+
+Turn on the whole plugin.                                            *'g:pymode'*
+>
+    let g:pymode = 1
+
+Turn off plugin's warnings.                                 *'g:pymode_warnings'*
+>
+    let g:pymode_warnings = 1
+
+Add paths to `sys.path`                                          *'g:pymode_paths'*
+Value is list of path's strings.
+>
+    let g:pymode_paths = []
+
+Trim unused white spaces on save.                   *'g:pymode_trim_whitespaces'*
+>
+    let g:pymode_trim_whitespaces = 1
+
+Setup default python options.                                *'g:pymode_options'*
+>
+    let g:pymode_options = 1
+
+If this option is set to 1, pymode will enable the following options for
+python buffers: >
+
+    setlocal complete+=t
+    setlocal formatoptions-=t
+    if v:version > 702 && !&relativenumber
+        setlocal number
+    endif
+    setlocal nowrap
+    setlocal textwidth=79
+    setlocal commentstring=#%s
+    setlocal define=^\s*\\(def\\\\|class\\)
+
+Setup max line length                        *'g:pymode_options_max_line_length'*
+>
+    let g:pymode_options_max_line_length = 79
+
+Enable colorcolumn display at max_line_length.   *'g:pymode_options_colorcolumn'*
+>
+    let g:pymode_options_colorcolumn = 1
+
+Setup pymode |quickfix| window.
+
+                   *'g:pymode_quickfix_maxheight'*  *'g:pymode_quickfix_minheight'*
+>
+    let g:pymode_quickfix_minheight = 3
+    let g:pymode_quickfix_maxheight = 6
+
+Set pymode |preview| window height.                     *'g:pymode_preview_height'*
+Preview window is used to show documentation and ouput from |pymode-run|.
+>
+    let g:pymode_preview_height = &previewheight
+
+Set where pymode |preview| window will appear.        *'g:pymode_preview_position'*
+>
+    let g:pymode_preview_position = 'botright'
+
+Value is command which can influcece where new window created by `:new` command
+will appear, eg. `:botright`.
+
+-------------------------------------------------------------------------------
+2.1. Python version ~
+                                                          *pymode-python-version*
+
+By default pymode will attempt to use Python 3, if available. However, you can
+also disable all Python features of pymode.
+
+                                                              *'g:pymode_python'*
+>
+    let g:pymode_python = 'python3'
+
+Values are `python3`, `disable`. If value set to `disable` most
+python-features of **pymode** will be disabled.
+
+Set value to `python3` if you are working with python3 projects. You could use
+|exrc|
+
++ Currently supported Python versions: 3.10.13, 3.11.9, 3.12.4, 3.13.0
++ 
++ For testing with different Python versions, see the Docker testing environment
++ described in the Development section.
+
+-------------------------------------------------------------------------------
+2.2 Python indentation ~
+                                                                  *pymode-indent*
+
+Pymode supports PEP8-compatible python indent.
+Enable pymode indentation                                     *'g:pymode_indent'*
+>
+    let g:pymode_indent = 1
+
+
+Customization:
+
+Hanging indent size after an open parenthesis or bracket (but nothing after the
+parenthesis), when vertical alignment is not used. Defaults to `&shiftwidth`.
+                                                *'g:pymode_indent_hanging_width'*
+>
+    let g:pymode_indent_hanging_width = &shiftwidth
+    let g:pymode_indent_hanging_width = 4
+
+-------------------------------------------------------------------------------
+2.3 Python folding ~
+                                                                 *pymode-folding*
+
+Enable pymode folding                                        *'g:pymode_folding'*
+>
+    let g:pymode_folding = 0
+
+Currently folding is considered experimental. There are several issues with
+its implementation.
+
+-------------------------------------------------------------------------------
+2.4 Vim motion ~
+                                                                 *pymode-motion*
+
+Support Vim motion (See |operator|) for python objects (such as functions,
+class and methods).
+
+`C` — means class
+`M` — means method or function
+                                                             *pymode-motion-keys*
+
+====  ============================
+Key   Command
+====  ============================
+[[    Jump to previous class or function (normal, visual, operator modes)
+]]    Jump to next class or function  (normal, visual, operator modes)
+[M    Jump to previous class or method (normal, visual, operator modes)
+]M    Jump to next class or method (normal, visual, operator modes)
+aC    Select a class. Ex: vaC, daC, yaC, caC (operator modes)
+iC    Select inner class. Ex: viC, diC, yiC, ciC (operator modes)
+aM    Select a function or method. Ex: vaM, daM, yaM, caM (operator modes)
+iM    Select inner function or method. Ex: viM, diM, yiM, ciM (operator modes)
+V     Select logical line. Ex: dV, yV, cV (operator modes), also works with count
+====  ============================
+
+Enable pymode-motion                                          *'g:pymode_motion'*
+>
+    let g:pymode_motion = 1
+
+-------------------------------------------------------------------------------
+2.5 Show documentation ~
+                                                           *pymode-documentation*
+
+Pymode could show documentation for current word by `pydoc`.
+
+Commands:
+*:PymodeDoc* <args> — show documentation
+
+Turns on the documentation script                                *'g:pymode_doc'*
+>
+    let g:pymode_doc = 1
+
+Bind keys to show documentation for current word (selection)
+                                                            *'g:pymode_doc_bind'*
+>
+    let g:pymode_doc_bind = 'K'
+
+-------------------------------------------------------------------------------
+2.6 Support virtualenv ~
+                                                              *pymode-virtualenv*
+
+Commands:
+*:PymodeVirtualenv* <path> -- Activate virtualenv (path can be absolute or
+relative to current working directory)
+
+Enable automatic virtualenv detection                     *'g:pymode_virtualenv'*
+>
+    let g:pymode_virtualenv = 1
+
+Set path to virtualenv manually                      *'g:pymode_virtualenv_path'*
+>
+    let g:pymode_virtualenv_path = $VIRTUAL_ENV
+
+-------------------------------------------------------------------------------
+2.7 Run code ~
+                                                                     *pymode-run*
+
+Commands:
+*:PymodeRun* -- Run current buffer or selection
+
+Turn on the run code script                                      *'g:pymode_run'*
+>
+    let g:pymode_run = 1
+
+Binds keys to run python code                               *'g:pymode_run_bind'*
+>
+    let g:pymode_run_bind = '<leader>r'
+
+-------------------------------------------------------------------------------
+2.8 Breakpoints ~
+                                                             *pymode-breakpoints*
+
+Pymode automatically detects available debugger (like pdb, ipdb, pudb) and user
+can set/unset breakpoint with one key and without code checking and etc.
+
+Enable functionality                                      *'g:pymode_breakpoint'*
+>
+    let g:pymode_breakpoint = 1
+
+Bind keys
+>
+    let g:pymode_breakpoint_bind = '<leader>b'
+
+Manually set breakpoint command (leave empty for automatic detection)
+>
+    let g:pymode_breakpoint_cmd = ''
+
+
+===============================================================================
+3. Code checking ~
+                                                                    *pymode-lint*
+
+Pymode uses Ruff for code checking and formatting. Ruff is a fast Python linter
+and formatter written in Rust that replaces multiple tools (pyflakes, pycodestyle,
+mccabe, pylint, pydocstyle, autopep8) with a single, unified tool.
+
+        Ruff configuration can be defined in `pyproject.toml` or `ruff.toml` files.
+        See Ruff documentation for details: https://docs.astral.sh/ruff/
+
+        For backward compatibility, existing `g:pymode_lint_*` options are mapped
+        to Ruff rules. See |pymode-ruff-configuration| for Ruff-specific options.
+
+Commands:
+*:PymodeLint* -- Check code in current buffer using Ruff
+*:PymodeLintToggle* -- Toggle code checking
+*:PymodeLintAuto* -- Format code in current buffer using Ruff
+
+Turn on code checking                                           *'g:pymode_lint'*
+>
+    let g:pymode_lint = 1
+
+Check code on every save (if file has been modified)   *'g:pymode_lint_on_write'*
+>
+    let g:pymode_lint_on_write = 1
+
+Check code on every save (every)                     *'g:pymode_lint_unmodified'*
+>
+    let g:pymode_lint_unmodified = 0
+
+Check code when editing (on the fly)                     *'g:pymode_lint_on_fly'*
+>
+    let g:pymode_lint_on_fly = 0
+
+Show error message if cursor placed at the error line   *'g:pymode_lint_message'*
+>
+    let g:pymode_lint_message = 1
+
+Default code checkers (legacy option, mapped to Ruff rules)
+                                                      *'g:pymode_lint_checkers'*
+>
+    let g:pymode_lint_checkers = ['pyflakes', 'pycodestyle', 'mccabe']
+
+Note: This option is now mapped to Ruff rules. The checker names are used to
+determine which Ruff rules to enable. For Ruff-specific configuration, see
+|pymode-ruff-configuration|.
+
+Skip errors and warnings                                 *'g:pymode_lint_ignore'*
+E.g. ["W", "E2"] (Skip all Warnings and the Errors starting with E2) etc.
+>
+    let g:pymode_lint_ignore = ["E501", "W",]
+
+Select some error or warnings.                           *'g:pymode_lint_select'*
+By example you disable all warnings starting from 'W', but want to see warning
+'W0011' and warning 'W430'
+>
+    let g:pymode_lint_select = ["E501", "W0011", "W430"]
+
+Sort errors by relevance                                   *'g:pymode_lint_sort'*
+If not empty, errors will be sort by defined relevance
+E.g. let g:pymode_lint_sort = ['E', 'C', 'I']  " Errors first 'E',
+after them 'C' and ...
+>
+    let g:pymode_lint_sort = []
+
+Auto open cwindow (quickfix) if any errors have been found
+                                                        *'g:pymode_lint_cwindow'*
+>
+    let g:pymode_lint_cwindow = 1
+
+Place error |signs|                                              *'g:pymode_signs'*
+>
+    let g:pymode_lint_signs = 1
+
+Definitions for |signs|
+>
+    let g:pymode_lint_todo_symbol = 'WW'
+    let g:pymode_lint_comment_symbol = 'CC'
+    let g:pymode_lint_visual_symbol = 'RR'
+    let g:pymode_lint_error_symbol = 'EE'
+    let g:pymode_lint_info_symbol = 'II'
+    let g:pymode_lint_pyflakes_symbol = 'FF'
+
+-------------------------------------------------------------------------------
+3.1 Ruff-specific configuration ~
+                                                      *pymode-ruff-configuration*
+
+Pymode provides Ruff-specific configuration options for fine-grained control:
+
+Enable Ruff linting                                          *'g:pymode_ruff_enabled'*
+>
+    let g:pymode_ruff_enabled = 1
+
+Enable Ruff formatting (auto-format)              *'g:pymode_ruff_format_enabled'*
+>
+    let g:pymode_ruff_format_enabled = 1
+
+Select specific Ruff rules to enable                    *'g:pymode_ruff_select'*
+Takes precedence over g:pymode_lint_select if set.
+>
+    let g:pymode_ruff_select = []
+
+Ignore specific Ruff rules                                *'g:pymode_ruff_ignore'*
+Takes precedence over g:pymode_lint_ignore if set.
+>
+    let g:pymode_ruff_ignore = []
+
+Path to Ruff configuration file                    *'g:pymode_ruff_config_file'*
+If empty, Ruff will look for pyproject.toml or ruff.toml automatically.
+>
+    let g:pymode_ruff_config_file = ""
+
+Ruff configuration mode                                  *'g:pymode_ruff_config_mode'*
+Controls how Ruff configuration is resolved. Determines whether local project
+configuration files (ruff.toml, pyproject.toml) or python-mode settings take
+precedence.
+
+Modes:
+  "local"         Use only project's local Ruff config. Python-mode settings
+                  are ignored. Ruff will auto-discover configuration files in
+                  the project hierarchy.
+
+  "local_override" Local config takes priority. If a local Ruff config file
+                  exists, it will be used. If no local config exists,
+                  python-mode settings serve as fallback. (default)
+
+  "global"        Use only python-mode settings. Local config files are
+                  ignored (uses --isolated flag). This restores the previous
+                  behavior where python-mode settings always override local
+                  configs.
+
+Default: "local_override"
+>
+    let g:pymode_ruff_config_mode = "local_override"
+    " Respect project's local Ruff config (recommended for team projects)
+    let g:pymode_ruff_config_mode = "local"
+    " Always use pymode settings, ignore project configs
+    let g:pymode_ruff_config_mode = "global"
+
+For more information about Ruff rules and configuration, see:
+https://docs.astral.sh/ruff/rules/
+
+-------------------------------------------------------------------------------
+3.2 Legacy code checker options (mapped to Ruff) ~
+                                                            *pymode-lint-options*
+
+The following options are maintained for backward compatibility and are mapped
+to Ruff rules:
+
+Set PEP8 options (mapped to Ruff E/W rules)
+                            *'g:pymode_lint_options_pycodestyle'*
+>
+    let g:pymode_lint_options_pycodestyle =
+        \ {'max_line_length': g:pymode_options_max_line_length}
+
+Set Pyflakes options (mapped to Ruff F rules)
+                           *'g:pymode_lint_options_pyflakes'*
+>
+    let g:pymode_lint_options_pyflakes = { 'builtins': '_' }
+
+Set mccabe options (mapped to Ruff C90 rules)
+                               *'g:pymode_lint_options_mccabe'*
+>
+    let g:pymode_lint_options_mccabe = { 'complexity': 12 }
+
+Set pep257 options (mapped to Ruff D rules)
+                               *'g:pymode_lint_options_pep257'*
+>
+    let g:pymode_lint_options_pep257 = {}
+
+Set pylint options (mapped to Ruff PLE/PLR/PLW rules)
+                               *'g:pymode_lint_options_pylint'*
+>
+    let g:pymode_lint_options_pylint =
+        \ {'max-line-length': g:pymode_options_max_line_length}
+
+For mapping details, see RUFF_CONFIGURATION_MAPPING.md in the repository.
+
+
+===============================================================================
+4. Rope support ~
+                                                                    *pymode-rope*
+
+Pymode supports Rope refactoring operations, code completion and code assists.
+
+Commands:
+|:PymodeRopeAutoImport| -- Resolve import for element under cursor
+|:PymodeRopeModuleToPackage| -- Convert current module to package
+|:PymodeRopeNewProject| -- Open new Rope project in current working directory
+|:PymodeRopeRedo| -- Redo changes from last refactoring
+|:PymodeRopeRegenerate| -- Regenerate the project cache
+|:PymodeRopeRenameModule| -- Rename current module
+|:PymodeRopeUndo| -- Undo changes from last refactoring
+
+
+Turn on the rope script                                         *'g:pymode_rope'*
+>
+    let g:pymode_rope = 1
+
+Set the prefix for rope commands                                *'g:pymode_rope_prefix'*
+>
+    let g:pymode_rope_refix = '<C-c>'
+
+.ropeproject Folder ~
+                                                                   *.ropeproject*
+
+*:PymodeRopeNewProject* [<path>] -- Open new Rope project in the given path
+*:PymodeRopeRegenerate* -- Regenerate the project cache
+
+Rope uses a folder inside projects for holding project configuration and data.
+Its default name is `.ropeproject`. It is recommended that you do not add the
+.ropeproject folder to version control system.
+
+Currently it is used for things such as:
+
+* The config.py file in this folder contains project configuration. Have
+    a look at the default config.py file (which is created when it
+    does not exist) for more information.
+* It can be used for saving project history, so that the next time you open the
+    project you can undo past changes.
+* It can be used to save information about object inferences.
+* It can be used to save a global name cache, which is used for auto-import.
+
+By default, if `.ropeproject` is not found in the current directory, rope will
+look recursively for it in parent folders.
+
+Warning: If rope finds `.ropeproject` in a parent dir, it will use it with
+all its child directories, which may slow scanning down (because of many,
+possibly unrelated, files)
+
+Enable searching for |.ropeproject| in parent directories
+                                                 *'g:pymode_rope_lookup_project'*
+>
+    let g:pymode_rope_lookup_project = 0
+
+You can also manually set the rope project directory. If not specified rope will
+use the current directory.
+                                                   *'g:pymode_rope_project_root'*
+>
+    let g:pymode_rope_project_root = ""
+
+
+The location of the `.ropeproject` folder may also be overridden if you wish to
+keep it outside of your project root. The rope library treats this folder as a
+project resource, so the path will always be relative to your project root (a
+leading '/' will be ignored). You may use `'..'` path segments to place the
+folder outside of your project root.
+                                                     *'g:pymode_rope_ropefolder'*
+>
+    let g:pymode_rope_ropefolder='.ropeproject'
+
+
+Show documentation for element under cursor ~
+
+Show documentation for object under cursor.       *'g:pymode_rope_show_doc_bind'*
+Leave empty to disable the key binding.
+>
+    let g:pymode_rope_show_doc_bind = '<C-c>d'
+
+Regenerate project cache on every save (if file has been modified)
+>
+    let g:pymode_rope_regenerate_on_write = 1
+
+-------------------------------------------------------------------------------
+4.1 Completion ~
+                                                              *pymode-completion*
+
+By default you can use <Ctrl-Space> for autocompletion. The first entry will
+be automatically selected and you can press <Return> to insert the entry in
+your code. <C-X><C-O> and <C-P>/<C-N> works too.
+
+Autocompletion is also called by typing a period in |Insert| mode by default.
+
+If there's only one complete item, vim may be inserting it automatically
+instead of using a popup menu. If the complete item which inserted is not
+your wanted, you can roll it back use '<c-w>' in |Insert| mode or setup
+'completeopt' with `menuone` and `noinsert` in your vimrc. .e.g.
+>
+    set completeopt=menuone,noinsert
+
+Turn on code completion support in the plugin        *'g:pymode_rope_completion'*
+>
+    let g:pymode_rope_completion = 1
+
+Turn on autocompletion when typing a period
+                                                *'g:pymode_rope_complete_on_dot'*
+>
+    let g:pymode_rope_complete_on_dot = 1
+
+Keymap for autocomplete                         *'g:pymode_rope_completion_bind'*
+>
+    let g:pymode_rope_completion_bind = '<C-Space>'
+
+Extended autocompletion (rope could complete objects which have not been
+imported) from project                               *'g:pymode_rope_autoimport'*
+>
+    let g:pymode_rope_autoimport = 0
+
+Load modules to autoimport by default        *'g:pymode_rope_autoimport_modules'*
+>
+    let g:pymode_rope_autoimport_modules = ['os', 'shutil', 'datetime']
+
+Offer to unresolved import object after completion.
+>
+    let g:pymode_rope_autoimport_import_after_complete = 0
+
+
+-------------------------------------------------------------------------------
+4.2 Find definition ~
+                                                             *pymode-rope-findit*
+
+By default when you press *<C-C>g* on any object in your code you will be moved
+to definition.
+Leave empty for disable key binding.       *'g:pymode_rope_goto_definition_bind'*
+>
+    let g:pymode_rope_goto_definition_bind = '<C-c>g'
+
+Command for open window when definition has been found
+Values are (`e`, `new`, `vnew`)                   *'g:pymode_rope_goto_definition_cmd'*
+>
+    let g:pymode_rope_goto_definition_cmd = 'new'
+
+-------------------------------------------------------------------------------
+4.3 Refactoring ~
+                                                        *pymode-rope-refactoring*
+
+Rename method/function/class/variable in the project ~
+
+Pymode can rename everything: classes, functions, modules, packages, methods,
+variables and keyword arguments.
+
+Keymap for rename method/function/class/variables under cursor
+                                                    *'g:pymode_rope_rename_bind'*
+>
+    let g:pymode_rope_rename_bind = '<C-c>rr'
+
+
+Rename a current module/package ~
+
+*:PymodeRopeRenameModule* -- Rename current module
+
+Keymap for rename current module             *'g:pymode_rope_rename_module_bind'*
+>
+    let g:pymode_rope_rename_module_bind = '<C-c>r1r'
+
+
+Imports ~
+
+*:PymodeRopeAutoImport* -- Resolve import for element under cursor
+
+Organize imports sorts imports, too. It does that according to PEP8. Unused
+imports will be dropped.
+Keymap                                    *'g:pymode_rope_organize_imports_bind'*
+>
+    let g:pymode_rope_organize_imports_bind = '<C-c>ro'
+
+Insert import for current word under cursor     *'g:pymode_rope_autoimport_bind'*
+Should be enabled |'g:pymode_rope_autoimport'|
+>
+    let g:pymode_rope_autoimport_bind = '<C-c>ra'
+
+
+Convert module to package ~
+                                         *'g:pymode_rope_module_to_package_bind'*
+
+*:PymodeRopeModuleToPackage* -- convert current module to package
+
+Keybinding:
+>
+    let g:pymode_rope_module_to_package_bind = '<C-c>r1p'
+
+
+Extract method/variable ~
+                                                            *pymode-rope-extract*
+
+Extract method/variable from selected lines.
+
+                                            *'g:pymode_rope_extract_method_bind'*
+                                          *'g:pymode_rope_extract_variable_bind'*
+>
+    let g:pymode_rope_extract_method_bind = '<C-c>rm'
+    let g:pymode_rope_extract_variable_bind = '<C-c>rl'
+
+
+Use function ~
+                                                                *pymode-rope-use*
+
+It tries to find the places in which a function can be used and changes the
+code to call it instead.
+>
+    let g:pymode_rope_use_function_bind = '<C-c>ru'
+
+
+Move refactoring ~
+                                                               *pymode-rope-move*
+
+Moving method/fields
+
+It happens when you perform move refactoring on a method of a class. In this
+refactoring, a method of a class is moved to the class of one of its
+attributes. The old method will call the new method. If you want to change all
+of the occurrences of the old method to use the new method you can inline it
+afterwards.
+
+Moving global variable/class/function into another module
+
+It happens when you perform move refactoring on global variable/class/function.
+In this refactoring, the object being refactored will be moved to a destination
+module. All references to the object being moved will be updated to point to
+the new location.
+
+Moving module variable/class/function into a package
+
+It happens when you perform move refactoring on a name referencing a module.
+In this refactoring, the module being refactored will be moved to a destination
+package. All references to the object being moved will be updated to point to
+the new location.
+
+>
+    let g:pymode_rope_move_bind = '<C-c>rv'
+
+Change function signature ~
+>
+    let g:pymode_rope_change_signature_bind = '<C-c>rs'
+
+
+-------------------------------------------------------------------------------
+4.4 Undo/Redo changes ~
+                                                               *pymode-rope-undo*
+                                                               *pymode-rope-redo*
+
+Commands:
+
+*:PymodeRopeUndo* -- Undo last changes in the project
+*:PymodeRopeRedo* -- Redo last changes in the project
+
+
+===============================================================================
+5. Syntax ~
+                                                                  *pymode-syntax*
+
+Turn on pymode syntax                                         *'g:pymode_syntax'*
+>
+    let g:pymode_syntax = 1
+
+Slower syntax synchronization that is better at handling code blocks in
+docstrings. Consider disabling this on slower hardware.
+                                                    *'g:pymode_syntax_slow_sync'*
+>
+    let g:pymode_syntax_slow_sync = 1
+
+Enable all python highlights                              *'g:pymode_syntax_all'*
+>
+    let g:pymode_syntax_all = 1
+
+Highlight "print" as a function             *'g:pymode_syntax_print_as_function'*
+>
+    let g:pymode_syntax_print_as_function = 0
+
+Highlight "async/await" keywords        *'g:pymode_syntax_highlight_async_await'*
+>
+    let g:pymode_syntax_highlight_async_await = g:pymode_syntax_all
+
+Highlight '=' operator               *'g:pymode_syntax_highlight_equal_operator'*
+>
+    let g:pymode_syntax_highlight_equal_operator = g:pymode_syntax_all
+
+Highlight ':=' operator             *'g:pymode_syntax_highlight_walrus_operator'*
+>
+    let g:pymode_syntax_highlight_walrus_operator = g:pymode_syntax_all
+
+Highlight '*' operator               *'g:pymode_syntax_highlight_stars_operator'*
+>
+    let g:pymode_syntax_highlight_stars_operator = g:pymode_syntax_all
+
+Highlight 'self' keyword                       *'g:pymode_syntax_highlight_self'*
+>
+    let g:pymode_syntax_highlight_self = g:pymode_syntax_all
+
+Highlight indent's errors                       *'g:pymode_syntax_indent_errors'*
+>
+    let g:pymode_syntax_indent_errors = g:pymode_syntax_all
+
+Highlight space's errors                         *'g:pymode_syntax_space_errors'*
+>
+    let g:pymode_syntax_space_errors = g:pymode_syntax_all
+
+Highlight string formatting                 *'g:pymode_syntax_string_formatting'*
+                                                *'g:pymode_syntax_string_format'*
+                                             *'g:pymode_syntax_string_templates'*
+                                                     *'g:pymode_syntax_doctests'*
+>
+    let g:pymode_syntax_string_formatting = g:pymode_syntax_all
+    let g:pymode_syntax_string_format = g:pymode_syntax_all
+    let g:pymode_syntax_string_templates = g:pymode_syntax_all
+    let g:pymode_syntax_doctests = g:pymode_syntax_all
+
+Highlight builtin objects (True, False, ...)     *'g:pymode_syntax_builtin_objs'*
+>
+    let g:pymode_syntax_builtin_objs = g:pymode_syntax_all
+
+Highlight builtin types (str, list, ...)        *'g:pymode_syntax_builtin_types'*
+>
+    let g:pymode_syntax_builtin_types = g:pymode_syntax_all
+
+Highlight exceptions (TypeError, ValueError, ...)
+                                         *'g:pymode_syntax_highlight_exceptions'*
+>
+    let g:pymode_syntax_highlight_exceptions = g:pymode_syntax_all
+
+Highlight docstrings as pythonDocstring (otherwise as pythonString)
+                                                   *'g:pymode_syntax_docstrings'*
+>
+    let g:pymode_syntax_docstrings = g:pymode_syntax_all
+
+
+===============================================================================
+6. FAQ ~
+                                                                     *pymode-faq*
+
+1. Python-mode doesn't work
+---------------------------
+
+First remember to get the latest and updated version of the project source
+code and also update the project submodules.
+
+Clear all python cache/compiled files (`*.pyc` files and `__pycache__`
+directory and everything under it). In Linux/Unix/MacOS you can run:
+
+`find . -type f -name '*.pyc' -delete && find . -type d -name '__pycache__' -delete`
+
+Then start python mode with:
+`vim -i NONE -u <path_to_pymode>/debugvimrc.vim`
+
+Reproduce the error and submit your python mode debug file. You can check its
+location with `:messages` for something like:
+
+`pymode debug msg 1: Starting debug on: 2017-11-18 16:44:13 with file /tmp/pymode_debug_file.txt`
+
+Please submit the entire content of the file along with a reasoning of why the
+plugin seems broken.
+
+	*Underlined	do check for sensitive information in the file before
+	*Underlined	submitting!
+
+
+
+2. Ruff linting or formatting issues                          *pymode-ruff-issues*
+
+If Ruff is not found, make sure it's installed: `pip install ruff`
+You can verify installation with: `ruff --version`
+
+If Ruff reports errors, check your `pyproject.toml` or `ruff.toml` configuration.
+For Ruff-specific options, use |pymode-ruff-configuration| instead of legacy
+options.
+
+For migration from old linting tools, see RUFF_CONFIGURATION_MAPPING.md in the
+repository.
+
+3. Rope completion is very slow                                *pymode-rope-slow*
+-------------------------------
+
+Rope creates a project-level service directory in |.ropeproject|
+
+If ``.ropeproject`` is not found in the current directory, rope will walk
+upwards looking for a ``.ropeproject`` in every dir of the parent path. If
+rope finds ``.ropeproject`` in a parent dir, it sets the project for all child
+dirs and the scan may be slow for so many dirs and files.
+
+Solutions:
+
+- Delete `.ropeproject` from the parent dir to make rope create `.ropeproject`
+  in the current dir.
+- Run ``:PymodeRopeNewProject`` to make rope create ``.ropeproject`` in the
+  current dir.
+- Set |'g:pymode_rope_lookup_project'| to 0 for prevent searching in parent
+  dirs.
+
+You may also set |'g:pymode_rope_project_root'| to manually specify the project
+root path.
+
+
+3. Ruff performance and configuration
+--------------------------------------
+
+Ruff is significantly faster than the old linting tools (pylint, pyflakes, etc.).
+If you experience any issues:
+
+- Ensure Ruff is installed: `pip install ruff`
+- Check Ruff configuration in `pyproject.toml` or `ruff.toml`
+- Use |pymode-ruff-configuration| for Ruff-specific options
+- Legacy options are automatically mapped to Ruff rules
+
+You may set |exrc| and |secure| in your |vimrc| to auto-set custom settings
+from `.vimrc` from your projects directories.
+
+4. OSX cannot import urandom
+----------------------------
+
+See: https://groups.google.com/forum/?fromgroups=#!topic/vim_dev/2NXKF6kDONo
+
+The sequence of commands that fixed this:
+>
+    brew unlink python
+    brew unlink macvim
+    brew remove macvim
+    brew install -v --force macvim
+    brew link macvim
+    brew link python
+
+5. Folding is slow
+------------------
+
+Python mode adds folding for definitions and multi line docstrings. These may
+be costly to compute on large files. To disable them one simple has to to add:
+
+    let g:pymode_folding = 1
+
+to their vimrc file.
+
+Beware that when editing python files in multiple windows vim computes the
+folding for every typed character. Thus it may be useful to define:
+
+    augroup unset_folding_in_insert_mode
+        autocmd!
+        autocmd InsertEnter *.py setlocal foldmethod=marker
+        autocmd InsertLeave *.py setlocal foldmethod=expr
+    augroup END
+
+===============================================================================
+7. Development~
+                                                             *pymode-development*
+
+This section briefly defines development guidelines for python-mode.
+
+1. This help file uses vim's conventions defined at |help-writing|.
+2. The name of the plugin shall be referred to as 'python-mode' throughout
+documentation (except as a first word in a sentence in which case is
+'Python-mode').
+3. All defined functions should use vim's conventions and start with 'Pymode'.
+4. Special marks for project development are `XXX` and `TODO`. They provide a
+easy way for developers to check pending issues.
+5. If submitting a pull request then a test should be added which smartly
+covers the found bug/new feature. Tests are written using the Vader test
+framework. Check out the existing test files in `tests/vader/` (1) for examples.
+A suggested structure is the following: add your test to `tests/vader/` (2)
+as a `.vader` file. You can make use of the existing sample files at
+`tests/test_python_sample_code` (3). Vader tests use Vimscript syntax and
+can directly test python-mode functionality. See `tests/vader/setup.vim` (4)
+for test setup utilities. The test runner is at `scripts/user/run_tests.sh` (5).
+
+6. Testing Environment: The project uses Docker for consistent testing across
+different Python versions. See `README-Docker.md` for detailed information about
+the Docker testing environment.
+
+7. CI/CD: The project uses GitHub Actions for continuous integration, building
+Docker images for each supported Python version and running tests automatically.
+
+8. Supported Python Versions: The project currently supports Python 3.10.13,
+3.11.9, 3.12.4, and 3.13.0. All tests are run against these versions in the
+CI environment.
+
+9. Docker Testing: To run tests locally with Docker:
+    - Use `./scripts/user/run-tests-docker.sh` to run tests with the default Python version
+    - Use `./scripts/user/run-tests-docker.sh 3.11` to test with Python 3.11.9
+    - Use `./scripts/user/test-all-python-versions.sh` to test with all supported versions
+
+===============================================================================
+8. Credits ~
+                                                                 *pymode-credits*
+    Kirill Klenov
+        http://klen.github.com/
+        http://github.com/klen/
+
+    Rope
+        Copyright (C) 2006-2010 Ali Gholami Rudi
+        Copyright (C) 2009-2010 Anton Gritsay
+        https://github.com/python-rope/rope
+
+    Ruff:
+        Copyright (c) 2022-present Astral Software
+        https://github.com/astral-sh/ruff
+        Ruff replaces multiple linting tools (pylint, pyflakes, pycodestyle,
+        mccabe, pydocstyle, autopep8) with a single, fast tool.
+
+    Python syntax for vim:
+        Copyright (c) 2010 Dmitry Vasiliev
+        http://www.hlabs.spb.ru/vim/python.vim
+
+    PEP8 VIM indentation
+        Copyright (c) 2012 Hynek Schlawack <hs@ox.cx>
+        http://github.com/hynek/vim-python-pep8-indent
+
+
+===============================================================================
+9. License ~
+                                                                 *pymode-license*
+
+Python-mode is released under the GNU lesser general public license.
+See: http://www.gnu.org/copyleft/lesser.html
+
+If you like this plugin, I would very appreciated if you kindly send me a
+postcard :)
+
+My address is: "Russia, 143500, MO, Istra, pos. Severny 8-3" to "Kirill
+Klenov". Thanks for your support!
+
+
+-------------------------------------------------------------------------------
+
+ vim:tw=79:ts=8:ft=help:norl:

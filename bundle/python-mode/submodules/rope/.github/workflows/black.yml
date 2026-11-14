@@ -1,0 +1,10 @@
+name: Run Black
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: psf/black@26.5.1

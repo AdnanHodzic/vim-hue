@@ -1,0 +1,15 @@
+name: Pre-commit
+
+on:
+  - pull_request
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PDM
+        uses: pdm-project/setup-pdm@v3
+      - name: Install deps
+        run: pdm install -G :all
+      - uses: pre-commit/action@v3.0.0

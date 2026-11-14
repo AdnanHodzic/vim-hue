@@ -1,0 +1,251 @@
+import multiprocessing
+import os
+import re
+import unittest
+from contextlib import contextmanager
+from textwrap import dedent
+from unittest.mock import patch
+
+import pytest
+
+from rope.base import exceptions
+from ropetest import testutils
+
+
+@contextmanager
+def assert_collects_doa_data(project):
+    assert len(project.pycore.object_info.objectdb.db) == 0
+    yield
+    assert len(project.pycore.object_info.objectdb.db) > 0
+
+
+@pytest.fixture
+def captured_run_module(project, tmp_path):
+    def _run_module(file):
+        runner = project.pycore.run_module(
+            file,
+            stdout=stdout.open("w"),
+        )
+        runner.wait_process()
+        return stdout.read_text()
+
+    stdout = tmp_path / "stdout"
+    return _run_module
+
+
+class PythonFileRunnerTest(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.project = testutils.sample_project()
+        self.pycore = self.project.pycore
+
+    def tearDown(self):
+        testutils.remove_project(self.project)
+        super().tearDown()
+
+    def make_sample_python_file(self, file_path, get_text_function_source=None):
+        self.project.root.create_file(file_path)
+        file = self.project.get_resource(file_path)
+        if not get_text_function_source:
+            get_text_function_source = "def get_text():\n    return 'run'\n\n"
+        file_content = (
+            get_text_function_source + "output = open('output.txt', 'w')\n"
+            "output.write(get_text())\noutput.close()\n"
+        )
+        file.write(file_content)
+
+    def get_output_file_content(self, file_path):
+        try:
+            output_path = ""
+            last_slash = file_path.rfind("/")
+            if last_slash != -1:
+                output_path = file_path[0 : last_slash + 1]
+            file = self.project.get_resource(output_path + "output.txt")
+            return file.read()
+        except exceptions.ResourceNotFoundError:
+            return ""
+
+    def test_making_runner(self):
+        file_path = "sample.py"
+        self.make_sample_python_file(file_path)
+        file_resource = self.project.get_resource(file_path)
+        runner = self.pycore.run_module(file_resource)
+        runner.wait_process()
+        self.assertEqual("run", self.get_output_file_content(file_path))
+        self.assertGreater(len(self.pycore.object_info.objectdb.db), 0)
+
+    def test_passing_arguments(self):
+        file_path = "sample.py"
+        function_source = dedent("""\
+            import sys
+            def get_text():
+                return str(sys.argv[1:])
+        """)
+        self.make_sample_python_file(file_path, function_source)
+        file_resource = self.project.get_resource(file_path)
+        runner = self.pycore.run_module(file_resource, args=["hello", "world"])
+        runner.wait_process()
+        self.assertTrue(
+            self.get_output_file_content(file_path).endswith("['hello', 'world']")
+        )
+
+    def test_passing_arguments_with_spaces(self):
+        file_path = "sample.py"
+        function_source = dedent("""\
+            import sys
+            def get_text():
+                return str(sys.argv[1:])
+        """)
+        self.make_sample_python_file(file_path, function_source)
+        file_resource = self.project.get_resource(file_path)
+        runner = self.pycore.run_module(file_resource, args=["hello world"])
+        runner.wait_process()
+        self.assertTrue(
+            self.get_output_file_content(file_path).endswith("['hello world']")
+        )
+
+    def test_killing_runner(self):
+        file_path = "sample.py"
+        code = dedent("""\
+            def get_text():
+                import time
+                time.sleep(1)
+                return 'run'
+        """)
+        self.make_sample_python_file(
+            file_path,
+            code,
+        )
+        file_resource = self.project.get_resource(file_path)
+        runner = self.pycore.run_module(file_resource)
+        runner.kill_process()
+        self.assertEqual("", self.get_output_file_content(file_path))
+
+    def test_running_nested_files(self):
+        self.project.root.create_folder("src")
+        file_path = "src/sample.py"
+        self.make_sample_python_file(file_path)
+        file_resource = self.project.get_resource(file_path)
+        runner = self.pycore.run_module(file_resource)
+        runner.wait_process()
+        self.assertEqual("run", self.get_output_file_content(file_path))
+
+    def test_setting_process_input(self):
+        file_path = "sample.py"
+        code = dedent("""\
+            def get_text():
+                import sys
+                return sys.stdin.readline()
+        """)
+        self.make_sample_python_file(file_path, code)
+        temp_file_name = "processtest.tmp"
+        try:
+            temp_file = open(temp_file_name, "w")
+            temp_file.write("input text\n")
+            temp_file.close()
+            file_resource = self.project.get_resource(file_path)
+            stdin = open(temp_file_name)
+            runner = self.pycore.run_module(file_resource, stdin=stdin)
+            runner.wait_process()
+            stdin.close()
+            self.assertEqual("input text\n", self.get_output_file_content(file_path))
+        finally:
+            os.remove(temp_file_name)
+
+    def test_setting_process_output(self):
+        file_path = "sample.py"
+        code = dedent("""\
+            def get_text():
+                print('output text')
+                return 'run'
+        """)
+        self.make_sample_python_file(file_path, code)
+        temp_file_name = "processtest.tmp"
+        try:
+            file_resource = self.project.get_resource(file_path)
+            stdout = open(temp_file_name, "w")
+            runner = self.pycore.run_module(file_resource, stdout=stdout)
+            runner.wait_process()
+            stdout.close()
+            temp_file = open(temp_file_name)
+            self.assertEqual("output text\n", temp_file.read())
+            temp_file.close()
+        finally:
+            os.remove(temp_file_name)
+
+    def test_setting_pythonpath(self):
+        src = self.project.root.create_folder("src")
+        src.create_file("sample.py")
+        src.get_child("sample.py").write("def f():\n    pass\n")
+        self.project.root.create_folder("test")
+        file_path = "test/test.py"
+        code = dedent("""\
+            def get_text():
+                import sample
+                sample.f()
+                return'run'
+        """)
+        self.make_sample_python_file(file_path, code)
+        file_resource = self.project.get_resource(file_path)
+        runner = self.pycore.run_module(file_resource)
+        runner.wait_process()
+        self.assertEqual("run", self.get_output_file_content(file_path))
+
+    def test_making_runner_when_doi_is_disabled(self):
+        self.project.set("perform_doa", False)
+        file_path = "sample.py"
+        self.make_sample_python_file(file_path)
+        file_resource = self.project.get_resource(file_path)
+        runner = self.pycore.run_module(file_resource)
+        runner.wait_process()
+        self.assertEqual("run", self.get_output_file_content(file_path))
+        self.assertEqual(len(self.pycore.object_info.objectdb.db), 0)
+
+    def test_pass_sendinfo_in_environ(self):
+        file_path = "sample.py"
+        self.make_sample_python_file(file_path)
+        file_resource = self.project.get_resource(file_path)
+
+        with patch('subprocess.Popen') as mock_popen:
+            runner = self.pycore.run_module(file_resource)
+
+        args = mock_popen.call_args.kwargs['args']
+        self.assertEqual(args[2], '-') # send_info
+
+        env = mock_popen.call_args.kwargs['env']
+        self.assertIsNotNone(re.fullmatch(r"\d+:[a-zA-Z0-9+/]+=*", env["ROPE_DOA_SOCK"]))
+
+
+class TestRunModMultiprocessing:
+    """run_module spawns multiprocessing in their different start modes"""
+
+    SCRIPT = dedent("""\
+        import multiprocessing as mp
+
+        def work():
+            print("child ran")
+
+        if __name__ == "__main__":
+            mp.set_start_method("{start_method}")
+            p = mp.Process(target=work)
+            p.start()
+            p.join()
+    """)
+
+    @pytest.mark.parametrize(
+        "start_method",
+        multiprocessing.get_all_start_methods()
+    )
+    def test_multiprocessing_startmethod(
+        self,
+        project,
+        mod1,
+        captured_run_module,
+        start_method,
+    ):
+        mod1.write(self.SCRIPT.format(start_method=start_method))
+
+        with assert_collects_doa_data(project):
+            stdout = captured_run_module(mod1)
+
+        assert stdout == "child ran\n"

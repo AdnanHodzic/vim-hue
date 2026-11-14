@@ -11,6 +11,13 @@ set textwidth=80				" text wrapping after 80 characters
 set showmatch					" show matching brackets
 set hlsearch					" highlight searches
 let python_highlight_all = 1	"enable all Python syntax highlighting features
+let g:pymode_rope = 1			" enable python-mode Rope autocompletion & code assist
+let g:pymode_rope_ropefolder = ''	" run Rope in-memory without creating .ropeproject dirs
+let g:pymode_options_colorcolumn = 0	" disable 80-char color column bar in python-mode
+set completeopt=menuone,noinsert,noselect	" show autocomplete menu without auto-inserting first item
+if !executable('ruff')
+  let g:pymode_lint = 0			" disable python-mode lint if ruff is not installed
+endif
 set nu							" show line numbers
 set list						" display whitespace
 " all yanking goes to clipboard (linux install vim-gtk)
@@ -23,7 +30,8 @@ endif
 runtime! defaults.vim
 let g:skip_defaults_vim = 1
 set mouse=
-set paste						" Paste from a windows or from vim (shift + p preserve indent)
+"set paste						" disabled:Vim 8+ uses bracketed paste; permanent 'paste' blocks insert-mode autocomplete
+set pastetoggle=<F2>			" toggle paste mode manually with F2 if needed
 set ignorecase					" case insensitive search
 set laststatus=2				" enable status bar
 set cursorline					" show a visual line under the cursor's current line

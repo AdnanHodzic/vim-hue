@@ -1,0 +1,256 @@
+name: Python-mode Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly run
+
+jobs:
+  test-linux:
+    name: Test on Linux (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+      fail-fast: false
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        submodules: recursive
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Ruff
+      run: |
+        pip install ruff
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y vim-nox git
+
+    - name: Run Vader test suite
+      run: |
+        pwd
+        ls -la scripts/cicd/
+        which bash
+        bash --version
+        bash scripts/cicd/run_vader_tests_direct.sh
+
+    - name: Upload test results
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+      if: always()
+      with:
+        name: test-results-linux-${{ matrix.python-version }}
+        path: |
+          test-results.json
+          test-logs/
+          results/
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2  # v6.0.0
+      with:
+        file: ./coverage.xml
+        flags: linux-python-${{ matrix.python-version }}
+
+  test-macos:
+    name: Test on macOS (Python ${{ matrix.python-version }})
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+      fail-fast: false
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        submodules: recursive
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Ruff
+      run: |
+        pip install ruff
+
+    - name: Install Vim and coreutils
+      run: |
+        brew install vim coreutils
+        # Ensure brew's bin directory is in PATH
+        echo "$(brew --prefix)/bin" >> $GITHUB_PATH
+        # Verify vim is available
+        which vim
+        vim --version
+        # Verify timeout is available (from coreutils)
+        # On macOS, coreutils installs commands with 'g' prefix, but PATH should have both
+        which timeout || which gtimeout || echo "Warning: timeout command not found"
+        # Test timeout command
+        timeout --version || gtimeout --version || echo "Warning: timeout not working"
+
+    - name: Run Vader test suite
+      run: |
+        pwd
+        ls -la scripts/cicd/
+        which bash
+        bash --version
+        bash scripts/cicd/run_vader_tests_direct.sh
+
+    - name: Upload test results
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+      if: always()
+      with:
+        name: test-results-macos-${{ matrix.python-version }}
+        path: |
+          test-results.json
+          test-logs/
+          results/
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2  # v6.0.0
+      with:
+        file: ./coverage.xml
+        flags: macos-python-${{ matrix.python-version }}
+
+  test-windows:
+    name: Test on Windows (Python ${{ matrix.python-version }})
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+      fail-fast: false
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        submodules: recursive
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Ruff
+      run: |
+        pip install ruff
+
+    - name: Install Vim
+      shell: pwsh
+      run: |
+        # Install Vim using Chocolatey (available on GitHub Actions Windows runners)
+        choco install vim -y
+        # Refresh PATH to make vim available
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+        # Also add common Vim installation paths
+        $env:Path += ";C:\Program Files (x86)\Vim\vim91\bin;C:\Program Files\Vim\vim91\bin;C:\tools\vim\vim91\bin"
+        # Add to GITHUB_PATH for subsequent steps
+        $vimPaths = @(
+          "C:\Program Files (x86)\Vim\vim91\bin",
+          "C:\Program Files\Vim\vim91\bin",
+          "C:\tools\vim\vim91\bin"
+        )
+        foreach ($path in $vimPaths) {
+          if (Test-Path $path) {
+            echo "$path" >> $env:GITHUB_PATH
+            Write-Host "Added to GITHUB_PATH: $path"
+          }
+        }
+        # Verify vim is available
+        $vimPath = (Get-Command vim -ErrorAction SilentlyContinue).Source
+        if ($vimPath) {
+          Write-Host "Vim found at: $vimPath"
+          & $vimPath --version
+        } else {
+          Write-Host "Vim not in PATH, trying to find it..."
+          $possiblePaths = @(
+            "C:\Program Files (x86)\Vim\vim91\vim.exe",
+            "C:\Program Files\Vim\vim91\vim.exe",
+            "C:\tools\vim\vim91\vim.exe"
+          )
+          $found = $false
+          foreach ($path in $possiblePaths) {
+            if (Test-Path $path) {
+              Write-Host "Found Vim at: $path"
+              & $path --version
+              $found = $true
+              break
+            }
+          }
+          if (-not $found) {
+            Write-Host "ERROR: Could not find Vim installation"
+            exit 1
+          }
+        }
+
+    - name: Run Vader test suite
+      shell: pwsh
+      run: |
+        Get-Location
+        Get-ChildItem scripts\cicd\
+        Get-Command pwsh | Select-Object -ExpandProperty Source
+        pwsh --version
+        pwsh scripts/cicd/run_vader_tests_windows.ps1
+
+    - name: Upload test results
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+      if: always()
+      with:
+        name: test-results-windows-${{ matrix.python-version }}
+        path: |
+          test-results.json
+          test-logs/
+          results/
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2  # v6.0.0
+      with:
+        file: ./coverage.xml
+        flags: windows-python-${{ matrix.python-version }}
+
+  summary:
+    name: Generate Test Summary
+    runs-on: ubuntu-latest
+    needs: [test-linux, test-macos, test-windows]
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        submodules: recursive
+
+    - name: Download all test results
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+      with:
+        path: test-results-artifacts
+        pattern: test-results-*
+        merge-multiple: false
+
+    - name: Install jq for JSON parsing
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq
+
+    - name: Generate PR summary
+      id: generate_summary
+      run: |
+        bash scripts/cicd/generate_pr_summary.sh test-results-artifacts pr-summary.md
+      continue-on-error: true
+
+    - name: Post PR comment
+      uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b  # v3.0.1
+      if: always() && github.event_name == 'pull_request'
+      with:
+        file-path: pr-summary.md
+        comment-tag: test-summary

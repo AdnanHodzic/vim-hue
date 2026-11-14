@@ -1,0 +1,60 @@
+repos:
+- repo: https://github.com/Lucas-C/pre-commit-hooks
+  rev: a30f0d816e5062a67d87c8de753cfe499672b959  # frozen: v1.5.5
+  hooks:
+  - id: insert-license
+    files: '^src/.+\.py$|^tests/.+\.py$'
+    args: ['--license-filepath', 'LICENSE-HEADER']
+- repo: https://github.com/executablebooks/mdformat
+  rev: 00812cd1850e41aae5c0916645b4b7404f538e8c  # frozen: 0.7.19
+  hooks:
+  - id: mdformat
+    additional_dependencies:
+    - mdformat-toc
+    - mdformat-gfm
+    - mdformat-black
+- repo: https://github.com/asottile/yesqa
+  rev: f2ae90cf9e1661ade79d0881186ce4fd7ba6ee79  # frozen: v1.5.0
+  hooks:
+  - id: yesqa
+    additional_dependencies:
+    - flake8-bugbear
+    - flake8-builtins
+    - flake8-comprehensions
+- repo: https://github.com/MarcoGorelli/absolufy-imports
+  rev: 1683a63d850e065495c05b771e4a20db010a58e7  # frozen: v0.3.1
+  hooks:
+  - id: absolufy-imports
+    files: '^src/.+\.py$'
+    args: ['--never', '--application-directories', 'src']
+- repo: https://github.com/PyCQA/isort
+  rev: c235f5e450b4b84e58d114ed4c589cbf454175a3  # frozen: 5.13.2
+  hooks:
+  - id: isort
+- repo: https://github.com/psf/black
+  rev: 1b2427a2b785cc4aac97c19bb4b9a0de063f9547  # frozen: 24.10.0
+  hooks:
+  - id: black
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
+  hooks:
+  - id: check-yaml
+- repo: https://github.com/pre-commit/pygrep-hooks
+  rev: 3a6eb0fadf60b3cccfd80bad9dbb6fae7e47b316  # frozen: v1.10.0
+  hooks:
+  - id: python-use-type-annotations
+  - id: python-check-blanket-noqa
+  - id: python-check-blanket-type-ignore
+- repo: https://github.com/PyCQA/flake8
+  rev: e43806be3607110919eff72939fda031776e885a  # frozen: 7.1.1
+  hooks:
+  - id: flake8
+    additional_dependencies:
+    - flake8-bugbear
+    - flake8-builtins
+    - flake8-comprehensions
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: f56614daa94d5cd733d3b7004c5df9caad267b4a  # frozen: v1.13.0
+  hooks:
+  - id: mypy
+    args: ["--scripts-are-modules"]

@@ -54,7 +54,7 @@ def vim_conf():
     print("\nNew Vim (vim-hue) configuration stored in:\n" + vim)
 
     # populate vimConfDir with hueSrcDir
-    copy_tree(hueSrcDir, vimConfDir)
+    copy_tree(hueSrcDir, vimConfDir, preserve_symlinks=1)
 
 def vim_conf_remove():
     print("\n" + 15 * "-" + " vim-hue - performing uninstall for current user " + 15 * "-" + "\n")
@@ -87,7 +87,7 @@ def global_vim_conf():
     print("New Vim (vim-hue) configuration stored in:\n" + globalVim)
 
     # populate vimConfDir with hueSrcDir
-    copy_tree(hueSrcDir, globalVimConfDir)
+    copy_tree(hueSrcDir, globalVimConfDir, preserve_symlinks=1)
 
 def global_vim_conf_remove():
     print("\n" + 10 * "-" + " vim-hue - performing system wide uninstall for every user " + 10 * "-" + "\n")
@@ -124,14 +124,14 @@ def root_check():
 
 # cli
 @click.command()
-@click.option('--install', type=click.Choice(['user', 'system']), help='Install for current user or all users - system wide (Linux only)')
+@click.option('--install', type=click.Choice(['user', 'system']), help='Install (or update) for current user or all users - system wide (Linux only)')
 @click.option('--uninstall', type=click.Choice(['user', 'system']), help='Uninstall for current user or all users - system wide (Linux only)')
 
 def cli(install, uninstall):
     # print --help by default if no argument is provided when vim-hue is run
     if len(sys.argv) == 1:
         header()
-        print("vim-hue - colorful Vim config & theme for all your SRE/DevOps needs\n")
+        print("vim-hue - a colorful Vim config for all your SRE, Dev, DevOps & Cloud needs\n")
         print("\nExample usage: python3 vim-hue.py --install user\n")
         print("-----\n")
 
