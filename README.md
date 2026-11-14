@@ -78,6 +78,10 @@ python3 vim-hue.py
 
 *Please note:* before running `--install`, feel free to review and customize settings in [vimrc](https://github.com/AdnanHodzic/vim-hue/blob/master/vimrc) to your own liking (you can also tweak `vimrc` later and re-run `--install` to apply your changes).
 
+### Activating code autocomplete
+
+Once in Vim insert mode (`i`), to activate autocomplete for Golang, Python, or Terraform code, press `Ctrl + x` followed by `Ctrl + o`.
+
 ### Technical rationale
 
 Goal of `vim-hue` is to being "vanilla" Vim as much as possible, yet to include all necessary functionality. As such it consits of:
