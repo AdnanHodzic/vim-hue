@@ -1,6 +1,6 @@
 #!/usr/env/bin python3
 #
-# vim-hue - colorful Vim config & theme for all your SRE/DevOps needs
+# vim-hue - a colorful Vim config for all your SRE, Dev, DevOps & Cloud needs
 #
 # Blog post: https://foolcontrol.org/?p=3051
 #

@@ -1,5 +1,5 @@
 # vim-hue
-vim-hue is colorful Vim config for all your SRE/DevOps needs. 
+vim-hue is colorful Vim config for all your SRE, Dev, DevOps & Cloud needs.
 
 It features "vim-hue" dark Vim colorscheme and complete Vim configuration. Ideal for anyone using Vim and any of the following on daily basis:
 
