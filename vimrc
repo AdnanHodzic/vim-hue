@@ -48,3 +48,6 @@ set nocp
 call pathogen#infect()
 syntax on						" enable syntax coloring/highlighting
 filetype indent plugin on		" automatic code indentation
+" context-aware Terraform/HCL omni-completion + syntax fallback for other filetypes (Ctrl+x Ctrl+o)
+autocmd FileType terraform,hcl setlocal omnifunc=terraformcomplete#Complete
+autocmd FileType * if &omnifunc == '' | setlocal omnifunc=syntaxcomplete#Complete | endif
